@@ -1,6 +1,6 @@
 # skills
 
-[koh11235813](https://github.com/koh11235813) が作った [Claude Code](https://claude.com/claude-code) 用スキル集だよ。
+[koh11235813](https://github.com/koh11235813) が作った [Claude Code](https://claude.com/claude-code)/[codex](https://github.com/openai/codex) 用スキル集だよ。
 
 [English version is here](README.md)
 
