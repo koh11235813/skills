@@ -14,6 +14,8 @@ npx skills add koh11235813/skills
 
 - **explore-grill-build** — End-to-end workflow for implementing a nontrivial feature or fix, from first look to committed code. Explores the codebase, interviews to turn vague requirements into a written plan, gets that plan reviewed, implements it test-first, and gates on review before anything is committed.
 
+- **codex-harness-behavior** - Operational model of how the codex (codex-rs) agent harness constrains, gates, and corrects agent behavior
+
 ## License
 
 [MIT](LICENSE)
