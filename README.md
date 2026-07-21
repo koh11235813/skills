@@ -1,6 +1,6 @@
 # skills
 
-A collection of [Claude Code](https://claude.com/claude-code) skills by [koh11235813](https://github.com/koh11235813).
+A collection of [Claude Code](https://claude.com/claude-code)/[codex](https://github.com/openai/codex) skills by [koh11235813](https://github.com/koh11235813).
 
 [日本語版はこちら](README_ja.md)
 
