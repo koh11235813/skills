@@ -1,0 +1,8 @@
+# agents
+.codex/
+.claude/
+.agents/
+.gemini/
+
+# memo
+MEMO.md
