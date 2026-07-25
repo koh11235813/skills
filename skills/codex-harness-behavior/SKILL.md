@@ -1,6 +1,6 @@
 ---
 name: codex-harness-behavior
-description: operational model of the codex (codex-rs) agent harness. how it composes what the agent reads, classifies and gates every command, jails execution, and reshapes results. use it when running under codex, driving the codex cli/mcp server, configuring approvals or sandboxing, or debugging odd codex behavior — sandbox denials, "rejected by user", truncated output, vanished context, commands that never run, an agent that won't stop.
+description: Operational model of the codex (codex-rs) agent harness. how it composes what the agent reads, classifies and gates every command, jails execution, and reshapes results. Use it when running under codex, driving the codex CLI/MCP server, configuring approvals or sandboxing, or debugging odd codex behavior — sandbox denials, "rejected by user", truncated output, vanished context, commands that never run, an agent that won't stop.
 ---
 
 # Codex Harness Behavior
