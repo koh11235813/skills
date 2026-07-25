@@ -1,0 +1,144 @@
+% beamerthemeToyohashi.sty
+% Toyohashi Tech Beamer theme
+% - white background, black text
+% - red (tutred) + black double horizontal rule as accent
+% - top-right university logo, bottom-left T mark
+% - centered bold frame title
+% - full-width middle-dot itemize marker
+% - black-background highlight box (tcolorbox)
+\ProvidesPackage{beamerthemeToyohashi}[2026/07/24 v1.0 Toyohashi Tech Beamer theme]
+
+\RequirePackage{tikz}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{skins}
+
+% ========== Colors ==========
+\definecolor{tutred}{RGB}{200,16,46}
+
+% ========== Base colors / fonts ==========
+\setbeamercolor{normal text}{fg=black,bg=white}
+\setbeamercolor{structure}{fg=black}
+\setbeamercolor{title}{fg=black}
+\setbeamercolor{subtitle}{fg=black!70}
+\setbeamercolor{frametitle}{fg=black}
+\setbeamercolor{author}{fg=black!80}
+\setbeamercolor{date}{fg=black!60}
+
+\setbeamerfont{title}{series=\bfseries,size=\Huge}
+\setbeamerfont{subtitle}{series=\mdseries,size=\large}
+\setbeamerfont{frametitle}{series=\bfseries,size=\Large}
+
+\setbeamertemplate{navigation symbols}{}
+
+% ========== Logo files ==========
+% NOT bundled with this skill: the Toyohashi University of Technology logos are
+% copyrighted by the university (https://www.tut.ac.jp/site-policy.html).
+% Obtain them yourself and drop them in ./images/ next to your .tex file.
+% Override the paths with \renewcommand if you keep them elsewhere.
+\providecommand{\tutlogomain}{images/tut-logo.png}   % top-right university name logo
+\providecommand{\tutlogomark}{images/tut-logo2.png}  % bottom-left T mark
+
+% Draw a logo only when the file is present, so the deck still builds (without
+% branding) for anyone who has not supplied the images.
+% #1 = file path, #2 = height
+\newcommand{\tutlogo}[2]{\IfFileExists{#1}{\includegraphics[height=#2]{#1}}{}}
+
+% ========== Itemize markers: full-width middle dot ・ ==========
+\setbeamertemplate{itemize item}{\raise0.15ex\hbox{・}}
+\setbeamertemplate{itemize subitem}{\raise0.15ex\hbox{・}}
+\setbeamertemplate{itemize subsubitem}{\raise0.15ex\hbox{・}}
+
+% ========== Highlight box: black bg, white text, rounded ==========
+\newtcolorbox{tuthighlight}[1][]{%
+  enhanced,
+  colback=black, colframe=black, coltext=white,
+  arc=8pt, boxrule=0pt,
+  halign=center, valign=center,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+  fontupper=\bfseries,
+  #1
+}
+
+% ========== Double horizontal rule (red thick over black thin) ==========
+% Draws two horizontal lines spanning the FULL paper width at the current
+% baseline, regardless of the surrounding text-area margins (frametitle /
+% centered environments / footline all leave a text-area inset). We use a
+% tikz overlay anchored to `current page.west/east`, then reserve vertical
+% space with an invisible strut so following content isn't overlaid.
+\newcommand{\tutdoublerule}{%
+  \par\noindent
+  \begin{tikzpicture}[baseline=0pt, overlay, remember picture]
+    \coordinate (tdr) at (0,0);
+    \draw[tutred, line width=1.9pt]
+      ([yshift=1.9pt]current page.west |- tdr) --
+      ([yshift=1.9pt]current page.east |- tdr);
+    \draw[black,  line width=1.8pt]
+      (current page.west |- tdr) --
+      (current page.east |- tdr);
+  \end{tikzpicture}%
+  \rule{0pt}{6pt}%
+  \par
+}
+
+% ========== Title page ==========
+\defbeamertemplate*{title page}{toyohashi}[1][]{%
+  % top-right university logo
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=north east, xshift=-0.6cm, yshift=-0.4cm]
+      at (current page.north east)
+      {\tutlogo{\tutlogomain}{1.4cm}};
+  \end{tikzpicture}%
+  \vfill
+  \begin{center}
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}%
+    \ifx\insertsubtitle\empty\else
+      \vspace{0.6em}%
+      {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
+    \fi
+    \vspace{0.8em}
+    \tutdoublerule
+    \vspace{0.8em}
+    {\usebeamercolor[fg]{author}\normalsize\insertauthor\par}
+    {\usebeamercolor[fg]{date}\small\insertdate\par}
+  \end{center}
+  \vfill
+}
+
+% ========== Frame title with double underline (compact) ==========
+% Uses \centering (instead of the center env's trivlist padding) and drops
+% surrounding \vspace to keep the title band around ~1.0 cm tall total.
+\defbeamertemplate*{frametitle}{toyohashi}{%
+  \vspace{0.15cm}%
+  {\centering\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}%
+    \insertframetitle\par}%
+  \nointerlineskip
+  \tutdoublerule
+}
+
+% ========== Footline: bottom double rule + T mark (left) + page number (right) ==========
+% Uses tikz overlay anchored to `current page.south west/east` so the rule
+% and glyphs are always flush to the true paper edges (not the frame's inner
+% text area). Reserve vertical space with a 1.2cm invisible strut so beamer
+% budgets the footline correctly.
+\defbeamertemplate*{footline}{toyohashi}{%
+  \begin{tikzpicture}[overlay, remember picture]
+    % Bottom double rule at 1.05 / 0.99 cm above paper's south edge
+    \draw[tutred, line width=1.9pt]
+      ([yshift=1.05cm]current page.south west) --
+      ([yshift=1.05cm]current page.south east);
+    \draw[black,  line width=1.8pt]
+      ([yshift=0.99cm]current page.south west) --
+      ([yshift=0.99cm]current page.south east);
+    % T mark at bottom-left
+    \node[anchor=south west, inner sep=0pt]
+      at ([xshift=0.4cm, yshift=0.18cm]current page.south west)
+      {\tutlogo{\tutlogomark}{0.72cm}};
+    % Page number at bottom-right
+    \node[anchor=south east, inner sep=0pt]
+      at ([xshift=-0.6cm, yshift=0.32cm]current page.south east)
+      {\small\insertframenumber};
+  \end{tikzpicture}%
+  \rule{0pt}{1.2cm}%
+}
+
+\mode<all>

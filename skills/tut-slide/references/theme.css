@@ -1,0 +1,232 @@
+/* @theme toyohashi */
+/*
+ * Toyohashi Tech Marp theme
+ * - white background, black text
+ * - red (#C8102E) + black double horizontal rule at the bottom of every slide
+ * - university name logo on the TITLE SLIDE ONLY; bottom-left T mark on the rest
+ * - centered bold h1/h2 with a full-bleed red+black double underline
+ * - `.highlight-box` : black bg / white text (used with <div class="highlight-box">)
+ * - `.cols`          : 2-column grid (used with <div class="cols"><div>...</div><div>...</div></div>)
+ * - `.figbox`        : figure placeholder box
+ * - `.lead` (Marp built-in): title slide
+ *
+ * NOTE: ./images/tut-logo.png and ./images/tut-logo2.png are NOT bundled with
+ * this skill — the Toyohashi University of Technology logos are copyrighted by
+ * the university (https://www.tut.ac.jp/site-policy.html). Supply them
+ * yourself; if they are missing the slides simply render without branding.
+ */
+
+@import 'default';
+
+:root {
+  --tut-red: #C8102E;
+  --tut-black: #000000;
+  /* Slide side padding — also the amount the title underline bleeds outward. */
+  --tut-pad-x: 60px;
+  /* Double-rule weights (Beamer uses 1.9pt red / 1.8pt black). */
+  --tut-rule-red: 4px;
+  --tut-rule-black: 4px;
+}
+
+section {
+  background-color: white;
+  color: #111;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans CJK JP",
+               "IPAexGothic", sans-serif;
+  font-size: 27px;
+  /* Content starts at the top, like Beamer. The default theme sets
+     `display: block` + `place-content: safe center center`, which vertically
+     centers the content in modern Chrome — override both. Column flex also
+     makes `margin-top: auto` work as the Marp equivalent of LaTeX \vfill. */
+  display: flex;
+  flex-direction: column;
+  align-content: start;
+  justify-content: flex-start;
+  padding: 34px var(--tut-pad-x) 110px var(--tut-pad-x);
+  /* Background layers (top to bottom in stacking order):
+     1) bottom-left T mark
+     2) bottom red thick line
+     3) bottom black thick line (under the red)
+     The university name logo appears on the title slide only — see section.lead.
+  */
+  background-image:
+    url('./images/tut-logo2.png'),
+    linear-gradient(var(--tut-red), var(--tut-red)),
+    linear-gradient(var(--tut-black), var(--tut-black));
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position:
+    28px calc(100% - 16px),   /* T mark bottom-left, below the rule */
+    0 calc(100% - 88px),      /* red thick line */
+    0 calc(100% - 84px);      /* black thick line, directly below the red */
+  background-size:
+    auto 52px,
+    100% var(--tut-rule-red),
+    100% var(--tut-rule-black);
+}
+
+/* Frame title (h1/h2) with a full-bleed red+black double underline.
+ * Negative side margins cancel the slide padding so the rule spans the whole
+ * 1280px page, matching the Beamer \tutdoublerule. */
+section > h1,
+section > h2 {
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.35em;
+  line-height: 1.25;
+  margin: 0 calc(-1 * var(--tut-pad-x)) 20px calc(-1 * var(--tut-pad-x));
+  padding: 0 var(--tut-pad-x) 10px var(--tut-pad-x);
+  background-image:
+    linear-gradient(var(--tut-red), var(--tut-red)),
+    linear-gradient(var(--tut-black), var(--tut-black));
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    0 calc(100% - var(--tut-rule-black)),
+    0 100%;
+  background-size:
+    100% var(--tut-rule-red),
+    100% var(--tut-rule-black);
+}
+
+/* Sub-headings inside columns must not pick up the frame-title underline. */
+section h3 {
+  font-size: 1.0em;
+  font-weight: 700;
+  margin: 0 0 0.4em 0;
+  background: none;
+}
+
+/* Title slide (Marp `<!-- _class: lead -->` directive)
+ * Only the university name logo here; the T mark, the bottom double rule and
+ * the page number are hidden. Like Beamer, the double rule sits between the
+ * title/subtitle block and the presenter line — it is drawn on the first
+ * paragraph, so it follows the text instead of a fixed page percentage. */
+section.lead {
+  align-content: center;
+  justify-content: center;
+  align-items: stretch;   /* keep the full-bleed rule below full width */
+  text-align: center;
+  background-image: url('./images/tut-logo.png');
+  background-repeat: no-repeat;
+  background-position: calc(100% - 28px) 24px;
+  background-size: auto 76px;
+}
+section.lead > h1,
+section.lead > h2 {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
+  background: none;
+}
+section.lead > h1 {
+  font-size: 2.4em;
+  color: black;
+  padding-bottom: 0.2em;
+}
+section.lead > h2 {
+  font-size: 1.1em;
+  color: #444;
+  font-weight: 400;
+  padding-bottom: 0;
+}
+/* Presenter line — carries the full-bleed double rule above it. */
+section.lead > p:first-of-type {
+  margin: 0.9em calc(-1 * var(--tut-pad-x)) 0 calc(-1 * var(--tut-pad-x));
+  padding: 0.9em var(--tut-pad-x) 0 var(--tut-pad-x);
+  background-image:
+    linear-gradient(var(--tut-red), var(--tut-red)),
+    linear-gradient(var(--tut-black), var(--tut-black));
+  background-repeat: no-repeat, no-repeat;
+  background-position: 0 0, 0 var(--tut-rule-red);
+  background-size:
+    100% var(--tut-rule-red),
+    100% var(--tut-rule-black);
+}
+section.lead::after {
+  display: none;   /* hide page number on title slide */
+}
+
+/* Bullet marker to full-width middle dot ・ */
+section ul {
+  list-style: none;
+  padding-left: 0.4em;
+}
+section ul > li {
+  position: relative;
+  padding-left: 1.2em;
+  margin: 0.25em 0;
+}
+section ul > li::before {
+  content: "・";
+  position: absolute;
+  left: 0;
+  color: black;
+}
+
+/* Highlight box: black bg, white text, rounded, centered */
+.highlight-box {
+  background: black;
+  color: white;
+  border-radius: 10px;
+  padding: 14px 22px;
+  text-align: center;
+  max-width: 80%;
+  margin: 14px auto;
+  font-weight: 700;
+}
+
+/* Two-column layout */
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+  /* Slide body is a column flexbox; without this the grid gets shrunk and the
+     explicit heights on .figbox children collapse. */
+  flex-shrink: 0;
+  width: 100%;
+}
+.cols > div {
+  min-width: 0;
+}
+
+/* Figure placeholder box (replace with a real <img> in your own deck).
+ * NOTE: Marp CLI sanitizes inline `style` attributes away — only `class`
+ * survives — so sizes are exposed as modifier classes, not inline styles.
+ *   <div class="figbox">…</div>            default, 240px tall
+ *   <div class="figbox tall">…</div>       300px tall
+ *   <div class="figbox short">…</div>      130px tall + top margin (bottom-of-slide wide figures)
+ */
+.figbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  background: #f4f4f4;
+  color: #555;
+  font-size: 0.8em;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-height: 240px;
+}
+.figbox.tall  { min-height: 300px; }
+/* Wide-and-short figures go to the BOTTOM of the slide so they never collide
+   with the frame title — `margin-top: auto` is the Marp equivalent of \vfill. */
+.figbox.short { min-height: 130px; margin-top: auto; }
+
+/* Down-arrow helper (for the flow-arrow pattern) */
+.down-arrow {
+  text-align: center;
+  font-size: 2em;
+  margin: 0.2em 0;
+  line-height: 1;
+}
+
+/* Page number (paginate: true) placement */
+section::after {
+  right: 32px;
+  bottom: 26px;
+  color: #333;
+  font-size: 0.8em;
+}
