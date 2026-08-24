@@ -55,7 +55,8 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Guardian denial wording | SKILL triage, mechanism §4 | `core/src/guardian/review.rs:733` | `rejected due to unacceptable risk` |
 | Human denial normalized — and *only* the exact string `rejected by user` is | SKILL triage, mechanism §4 | `core/src/tools/events.rs:441-448` | `exec command rejected by user` |
 | Deserialization/client/transport failures keep the reason `approval request failed` | SKILL triage, mechanism §2 | `app-server/src/bespoke_event_handling.rs:1954,2042` | `approval request failed` |
-| Abort tears down the whole turn | mechanism §2 | `core/src/session/handlers.rs:196-208` | `ReviewDecision::Abort` |
+| Abort tears down the whole turn — for the exec and patch approval ops only | mechanism §2 | `core/src/session/handlers.rs:196-208` | `ReviewDecision::Abort` |
+| …but an MCP approval abort is converted back into a tool result (`user cancelled MCP tool call`), because MCP approvals travel through `request_user_input`, whose handler does not interrupt | SKILL triage, mechanism §2 | `core/src/mcp_tool_call.rs:296,1391-1396,1505-1512`; `core/src/session/handlers.rs:214-220` | `user cancelled MCP tool call` |
 | MCP denial never contacts the server | SKILL triage, mechanism §4 | `core/src/mcp_tool_call.rs:1894` | `user rejected MCP tool call` |
 | Escalation and retries force synchronous Guardian review, skipping extension reviewers | mechanism §2, §3 | `core/src/guardian/review.rs:325,341` | `requires_synchronous_review` |
 | Guardian denial circuit breaker: 3 consecutive / 10-in-50, and 1/1 for a cyber-specialty model **only** — an `auto_review.ignore_rules` slug does not select it | SKILL triage, mechanism §2 | `core/src/guardian/mod.rs:55-59,163-183`; `core/src/guardian/review.rs:252-257` | `MAX_CONSECUTIVE_CYBER_GUARDIAN_DENIALS_PER_TURN`; `MODEL_SPECIALTY_CYBER` |
@@ -66,6 +67,14 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | A network request disconnecting during approval cancels the *owning execution*, and only when one is attributed | SKILL triage, mechanism §3, §4 | `core/src/tools/network_approval.rs:354,660-676` | `before approval could complete`; `execution_id: owner_call` |
 | …but the disconnect never cancels the approval reviewer or changes its decision | SKILL triage, mechanism §3 | `network-proxy/src/request_disconnect.rs:8-11` | `struct NetworkRequestDisconnect` |
 | Codex delegates are refused unless approval policy is `never` | mechanism §5 | `core/src/codex_delegate.rs:65` | `Codex delegates require approval policy` |
+| A required-auto-review model coerces full access to workspace-write and forces the Guardian reviewer at startup | SKILL Layer 0, mechanism §2 | `core/src/session/mod.rs:602-635` | `auto_review_required_for_model` |
+| …and the validation that runs after it passes unless `guardian_approval` is off or the profile still has full-disk write, so at startup it bites only in those cases; a *later* settings change undoing either coercion is rejected the same way, with `To use model X, you need to use auto review.` | SKILL Layer 0, mechanism §2 | `core/src/session/session.rs:315-353`; `config/src/constraint.rs:19-20` | `AutoReviewRequired` |
+| …and MCP *reviewer selection* returns Guardian ahead of any per-app reviewer setting, but the three skip-review shortcuts are evaluated separately and still fire, so a per-tool `approval_mode = "approve"` runs unprompted anyway | SKILL Layer 0, SKILL inside playbook, mechanism §2 | `core/src/connectors.rs:523-527`; `core/src/mcp_tool_call.rs:1315-1350,2220-2232` | `mcp_approvals_reviewer_from_layers`; `AppToolApproval::Approve` |
+| `--approve-for-me` expands to exactly three config overrides | SKILL off-by-default table | `utils/cli/src/shared_options.rs:43-50,75-90` | `take_auto_review_config_overrides` |
+| An `ApprovedMcpPolicyAmendment` decision writes `approval_mode = "approve"` into config.toml (server, plugin or apps variant) and degrades to a session-only memory on any write failure | SKILL inside playbook, mechanism §2 | `core/src/mcp_tool_call.rs:1988,2017-2046,2083-2124` | `ApprovedMcpPolicyAmendment` |
+| …and whether an MCP tool prompts at all is decided per tool by its approval mode, defaulting to `auto`, where the server's own `read_only_hint` decides | SKILL inside playbook, mechanism §6 | `core/src/mcp_tool_call.rs:2201-2232`; `config/src/mcp_types.rs:23-31` | `requires_mcp_tool_approval_for_mode` |
+| Turn-scoped `strict_auto_review` routes every approval to Guardian and cancels three MCP shortcuts; the only writer is a client `request_permissions` response | mechanism §2 | `core/src/mcp_tool_call.rs:1311-1351`; `core/src/tools/approvals.rs:508`; `core/src/session/mod.rs:2848-2851` | `strict_auto_review_enabled` |
+| Persisting an execpolicy amendment is a second approval that outlives the call, so MCP persistence is not unique | mechanism §2 | `core/src/session/handlers.rs:181-187` | `ApprovedExecpolicyAmendment` |
 
 ## OS sandboxing
 
@@ -97,6 +106,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Linux sandbox runs as PID 1 and reaps orphans | mechanism §3 | `linux-sandbox/src/launcher.rs:39,197` | `--as-pid-1` |
 | Linux materializes synthetic empty protected dirs | mechanism §3 | `linux-sandbox/src/bwrap.rs:1044,1077` | `append_missing_read_only_subpath_args` |
 | Project-root discovery requires a `HEAD` file inside `.git` | mechanism §3 | `config/src/loader/mod.rs:1344-1348` | `join("HEAD")` |
+| A named list strips five auth variables from model-reachable children, explicit command overrides included | mechanism §3 | `protocol/src/shell_environment.rs:13-50` | `NON_INHERITABLE_ENV_VARS` |
 
 ## Limits and truncation
 
@@ -130,11 +140,21 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Periodic timestamp reminder | mechanism §1 | `core/src/context/current_time_reminder.rs:28-30,35-37` | `<current_time_reminder>` |
 | A saved prefix rule or network rule is echoed back as a context fragment | mechanism §1, §2 | `core/src/context/approved_command_prefix_saved.rs:22`; `core/src/context/mod.rs:3,25,43-44,75` | `approved_command_prefix_saved`; `NetworkRuleSaved` |
 | Untrusted projects load no project AGENTS.md at all | SKILL inside playbook, mechanism §1 | `core/src/agents_md.rs:64-66` | `active_project.is_untrusted()` |
-| Sandboxed AGENTS.md read failure returns an error rather than degrading | mechanism §1 | `core/src/agents_md.rs:120` | `failed to load AGENTS.md instructions for environment` |
+| Sandboxed AGENTS.md read failure returns an error rather than degrading, and the callers are now traced: fatal at session init through `thread/start`, and a pre-sampling `EventMsg::Error` on a later refresh. The model never sees it | SKILL outside playbook, mechanism §1 | `core/src/agents_md.rs:103-124`; `core/src/session/session.rs:1221-1231`; `core/src/session/mod.rs:735-774,3191-3200`; `app-server/src/request_processors/thread_processor.rs:1417-1427` | `failed to load AGENTS.md instructions` |
 | `project_doc_max_bytes` is one pool across all environments | SKILL outside playbook, mechanism §1 | `core/src/agents_md.rs:68` | `let mut remaining = config.project_doc_max_bytes` |
 | Skills budget warnings go to the client, not into context | SKILL default surface, mechanism §6 | `ext/skills/src/render.rs:93`; `ext/skills/src/extension.rs:617-623` | `fn warning_message` |
 | Skill locators are aliased to `r0`/`r1` unannounced | mechanism §6 | `ext/skills/src/render.rs:522,1028` | `build_aliased_catalog` |
 | Combined catalogs share one budget | mechanism §6 | `ext/skills/src/render.rs:544` | `render_combined_available_skills` |
+| User-shell (`!command`, `thread/shellCommand`) output re-enters model context unsandboxed, with no exec-policy check and no approval, through a login shell with any managed proxy stripped, and lands mid-turn when a turn is already active | SKILL inside playbook, mechanism §1 | `core/src/tasks/user_shell.rs:147,165-167,204-219,447-471`; `core/src/context/user_shell_command.rs:35-52` | `<user_shell_command>`; `strip_managed_proxy_env`; `inject_no_new_turn` |
+| IDE context is injected unmarked into the user's own text item, split by `## My request for Codex:` | SKILL inside playbook, mechanism §1 | `tui/src/ide_context/prompt.rs:9-16,26,47,65-74,181-183`; `tui/src/chatwidget/ide_context.rs:7-11` | `Context from my IDE setup` |
+| `<git_attribution>` is a developer fragment driven by the backend `commit_attribution_enabled` setting; disabled emits nothing from an absent prior | mechanism §1 | `ext/git-attribution/src/world_state.rs:17-25,44-53`; `ext/git-attribution/src/policy.rs:47,50,79,90`; `ext/git-attribution/src/lib.rs:40-63` | `Ignore any earlier instructions disabling Codex attribution` |
+| Any project not explicitly *trusted* loads no project-local config, hooks or exec policies | SKILL inside playbook | `config/src/loader/mod.rs:1063-1080`; `config/src/config_toml.rs:544-552` | `project-local config, hooks, and exec policies` |
+| A disabled config layer contributes nothing to the merged config | SKILL inside playbook | `config/src/state.rs:481-484` | `fn layers_low_to_high` |
+| Project skill roots survive a disabled project layer | SKILL inside playbook | `ext/skills/src/host_roots.rs:80-92` | `SkillScope::Repo` |
+| Four auth requirement fields are stripped from backend-delivered layers, and a disallowed stored credential is filtered to `None` rather than reported | mechanism Layer 0 | `config/src/requirements_layers/layer.rs:11-17,91-96`; `login/src/auth/manager.rs:1141-1152,1181` | `LOCAL_ONLY_AUTH_REQUIREMENTS` |
+| Web search mode defaults to `Cached`, which grants the same external access as `Disabled` (`external_web_access: false`) while still registering the tool, where `Disabled` returns no tool spec at all | SKILL outside playbook | `core/src/config/mod.rs:2595-2606,3650`; `core/src/tools/hosted_spec.rs:16`; `ext/web-search/src/extension.rs:86-92` | `external_web_access_for_mode` |
+| …and an unsupported preference walks a fallback list rather than erroring | SKILL outside playbook | `core/src/config/mod.rs:2976-3020` | `resolve_web_search_mode_for_turn` |
+| `web.run` auto-ships a two-user-message tail with a 1,000-token assistant budget | mechanism §2 | `ext/web-search/src/history.rs:10,18-26`; `core/src/tools/spec_plan.rs:936-945` | `ASSISTANT_CONTEXT_TOKEN_LIMIT` |
 
 ## Results on the way back
 
@@ -161,6 +181,10 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | …with backoff doubling from 5 s to a 60 s cap, and a server-side warning alongside the frontend notice | SKILL outside playbook, mechanism §5 | `core/src/responses_retry.rs:17-18,67-80` | `MAX_CONNECTION_RETRY_DELAY` |
 | …emitting only a reconnect notice | mechanism §5 | `core/src/responses_retry.rs:74` | `waiting for network` |
 | Remote compaction V2 can retain client-authored developer messages across the boundary | mechanism §5 | `core/src/compact_remote_v2.rs:459,475-477`; `features/src/lib.rs:1548-1553` | `retain_client_developer_messages`; `is_client_authored_developer_message` |
+| MCP tool names are sanitized, hash-suffixed on collision and truncated at 128 bytes before registration, so MCP-vs-MCP names never reach the duplicate drop | mechanism §2 | `codex-mcp/src/tools.rs:58,113,153-197,226,241-244,288-311`; `core/src/config/mod.rs:1759-1762`; `features/src/lib.rs:1194-1198` | `MAX_TOOL_NAME_LENGTH` |
+| A misalignment-policy verdict is typed non-retryable and the reference client kills the thread | mechanism §5 | `codex-api/src/sse/responses.rs:423-431`; `protocol/src/error.rs:135-136,388-389`; `tui/src/chatwidget/misalignment_policy.rs:5-43` | `MisalignmentPolicyViolation` |
+| `invalid_grant` on a 400 is a permanent, cached refresh failure; other 400s stay transient | mechanism §5 | `login/src/auth/manager.rs:1586-1602,2297-2305`; `core/src/client.rs:2320-2341` | `is_invalid_grant_bad_request` |
+| Queued messages committed by another process start turns on already-loaded, idle threads | mechanism §5 | `ext/queue/src/service.rs:91-95,136,148,190-240`; `state/src/runtime/queued_items.rs:34-47`; `app-server/src/extensions.rs:76-78` | `watch_external_messages` |
 
 ## Cross-cutting loops
 
@@ -197,7 +221,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Nested tool calls go through the same router | SKILL Layer 0, mechanism §6 | `core/src/tools/code_mode/mod.rs:293-333` | `call_nested_tool` |
 | A failed nested call becomes a rejected promise | SKILL Layer 0, mechanism §6 | `code-mode-runtime/src/runtime/mod.rs:236,244`, definition `code-mode-runtime/src/runtime/module_loader.rs:66` | `resolve_tool_response` |
 | `CodeModeOnly` hides other tools from the menu | mechanism §6 | `core/src/tools/spec_plan.rs:231-243,464-479` | `DirectModelOnly` |
-| Skills are reachable as `list` / `read` tools | SKILL default surface, mechanism §6 | `ext/skills/src/tools/list.rs:30`, `read.rs:28` | `TOOL_NAME` |
+| Skills are reachable as `list` / `read` tools | SKILL default surface, mechanism §6 | `ext/skills/src/tools/list.rs:30`; `ext/skills/src/tools/read.rs:28` | `TOOL_NAME` |
 | **No general secret redaction in the exec output path** | SKILL default surface, mechanism §4 | `secrets/src/sanitizer.rs:1-22` | `redact_secrets` |
 | Plugins can declare MCP servers and hooks | mechanism §6 | `plugin/src/manifest.rs:19-42` | `PluginManifestHooks` |
 | Plan mode hard-blocks `update_plan` only | mechanism §6 | `core/src/tools/handlers/plan.rs:84-88` | `not allowed in Plan mode` |
@@ -229,6 +253,31 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | `send_user_message_async` is catalog-gated and root-session-only | SKILL default surface, mechanism Layer 0 | `core/src/tools/spec_plan.rs:1040-1048` | `SendUserMessageAsyncHandler`; `is_non_root_agent` |
 | …and it returns immediately while the turn continues | SKILL default surface | `core/src/tools/handlers/send_user_message_async.rs:44-47,81-95` | `"accepted":true` |
 | Quoting a glob preserves it as a literal argv token rather than expanding it | SKILL inside playbook | `shell-command/src/bash.rs:451-470` | `preserves_quoted_literals` |
+| `uses_codex_backend()` is false only for `ApiKey` and `BedrockApiKey` | SKILL default surface | `protocol/src/auth.rs:45-56` | `fn uses_codex_backend` |
+| …consumed by the apps gate, connectors, the plugin marketplace, app routing, the cloud bundle and history/notes | SKILL default surface, mechanism §6 | `core/src/session/turn_context.rs:349-357`; `core/src/connectors.rs:445`; `core-plugins/src/manager.rs:562-568,642-644`; `core-plugins/src/app_mcp_routing.rs:6-19`; `cloud-config/src/service.rs:48-56`; `ext/history-notes/src/extension.rs:40` | `apps_enabled_for_auth` |
+| …but memories is **not** a consumer: non-codex-backend auth skips the rate-limit check rather than disabling memories | — | `memories/write/src/guard.rs:9-18` | `rate_limits_check` |
+| Auth mode selects the curated marketplace and clears plugin-declared apps while leaving `mcp_servers` | mechanism §6 | `core-plugins/src/manager.rs:555-568,642-644`; `core-plugins/src/app_mcp_routing.rs:6-19` | `target_curated_marketplace` |
+| The cloud-delivered requirements bundle needs codex-backend auth and a business/education/enterprise plan; header auth reports no plan | mechanism Layer 0 | `cloud-config/src/service.rs:48-56`; `protocol/src/account.rs:59-86`; `login/src/auth/manager.rs:618-621` | `cloud_config_eligible_auth` |
+| Workload identity is env-selected, immutable and rejects logout; `codex mcp-server` refuses it | mechanism Layer 0 | `login/src/auth/workload_identity.rs:123-167`; `login/src/auth/manager.rs:2557-2564,2859-2866`; `mcp-server/src/lib.rs:211-219` | `workload identity auth is managed by the host and cannot be logged out` |
+| Only `ApiKey` and `BedrockApiKey` are exempt from workspace restrictions; header auth is checked via its account id | — | `login/src/auth/manager.rs:1219-1241,1315-1323` | `Login is restricted to workspace(s)` |
+| Managed `enforce_residency` overrides a provider's configured residency header at request time rather than erroring, leaving only a startup warning | — | `model-provider/src/provider.rs:35-42`; `core/src/config/requirements.rs:52-68` | `because managed residency is required` |
+| Every registered MCP tool is `Deferred` on a search-capable model, and a server's `omit_tools_from` removes it from any of the three exposure surfaces | SKILL default surface, mechanism §6 | `core/src/tools/spec_plan.rs:156,174,208-227,578`; `config/src/mcp_types.rs:207`; `protocol/src/config_types.rs:399` | `omit_tools_from` |
+| Optional MCP servers get a one-second startup grace, then are omitted with only a trace log; cached catalogs publish with `read_only_hint` cleared | mechanism §6 | `codex-mcp/src/connection_manager/tool_catalog.rs:35,188-241`; `core/src/mcp_tool_call.rs:158,2234-2264` | `OPTIONAL_MCP_STARTUP_GRACE` |
+| `is not available to the model` fires when `prepare_mcp_call` resolves to no binding for that server/tool; the cached-catalog case is one cause, not the only one | SKILL triage, mechanism §4 | `core/src/mcp_tool_call.rs:149-158`; `core/src/session/mcp_runtime.rs:60-71` | `fn prepare_mcp_call` |
+| Under `never`, an MCP permission prompt auto-approves for a Disabled/External profile or a Managed one with full-disk write, so the `requires approval` string appears only under a restricted Managed profile | SKILL triage, mechanism §4 | `codex-mcp/src/mcp/mod.rs:87-106`; `core/src/mcp_tool_call.rs:1427-1431` | `mcp_permission_prompt_is_auto_approved` |
+| MCP catalog enumeration aborts whole (100 pages, 2,048 items / 8,192 for Apps, 64 KiB cursor, startup-timeout bound) rather than truncating | mechanism §6 | `codex-mcp/src/pagination.rs:9-13,44-74`; `codex-mcp/src/rmcp_client.rs:97,629,926-932` | `MAX_MCP_CATALOG_ITEMS` |
+| MCP elicitations: `never` declines, but an empty-schema confirm is auto-accepted first; a strict-auto-review elicitation fails closed | mechanism §6 | `codex-mcp/src/elicitation.rs:44,254-301,309-314,334-340,444-476` | `elicitation_is_rejected_by_policy` |
+| A selected remote executor contributes its own eligible HTTP MCP servers to the thread | mechanism §6 | `core/src/session/mcp_runtime.rs:145-217`; `exec-server/src/environment_config.rs:67-91` | `discover_http_mcp_servers` |
+| App-tool policy blocks a `codex_apps` call with its own model-visible string; the same evaluator also filters the menu, and both annotation hints default to `true` | SKILL triage, mechanism §4, §6 | `core/src/mcp_tool_call.rs:191-199,2264`; `core/src/mcp_tool_exposure.rs:157-183`; `connectors/src/app_tool_policy.rs:214-231` | `MCP tool call blocked by app configuration` |
+| Apps/connector surface is default-on, gated only by auth; both non-auth inputs default true | mechanism §6 | `core/src/session/turn_context.rs:349-358`; `features/src/lib.rs:445-447,1147-1151`; `core/src/config/mod.rs:2633-2637`; `core/src/session/turn.rs:779-799`; `core/src/session/world_state.rs:218-231` | `apps_enabled_for_auth` |
+| A hosted `codex_apps` remote MCP server is contributed whenever `Feature::Apps` is on; the contributor checks no auth | mechanism §6 | `ext/mcp/src/lib.rs:19-38`; `app-server/src/extensions.rs:108` | `hosted_plugin_runtime_mcp_server_config` |
+| `image_gen.imagegen` is filtered out of the menu unless five gates pass, and its save path bypasses the filesystem sandbox | mechanism §6 | `core/src/tools/spec_plan.rs:611-648,1273-1276`; `ext/image-generation/src/tool.rs:277-296`; `ext/image-generation/src/artifact.rs:5-6,31-34`; `model-provider-info/src/lib.rs:471-479` | `image_generation_available` |
+| Goal tools register only in app-server sessions with persistent thread state, excluding review subagents; the budget ceiling exists only once configured | mechanism §1 | `ext/goal/src/spec.rs:9-11`; `app-server/src/extensions.rs:80-92`; `ext/goal/src/extension.rs:101-105,414-424`; `ext/goal/src/runtime.rs:117-119`; `ext/goal/src/tool.rs:407-425` | `tools_available_for_thread` |
+| A `code_mode_only` session keeps direct-model-only tools and hosted tools; only code-mode-nested tools are hidden | SKILL Layer 0, mechanism §6 | `core/src/tools/spec_plan.rs:484-510,682-693`; `tools/src/tool_executor.rs:64-72`; `code-mode-protocol/src/description.rs:251` | `is_hidden_by_code_mode_only`; `fn hosted_model_tool_specs` |
+| Ordinary `CodeMode` falls back to `Direct` when the host is unavailable; `CodeModeOnly` never does, and the host failure reaches the model as tool output | SKILL Layer 0, mechanism §6 | `core/src/tools/mod.rs:79-89`; `core/src/tools/code_mode/mod.rs:101-114`; `core/src/tools/code_mode/execute_handler.rs:65-77` | `disable_in_process_fallback`; `Code mode will fail closed` |
+| `hide_spawn_agent_metadata` drops `service_tier` from the spawn schema and the nickname from the result; `non_code_mode_only` selects `DirectModelOnly` exposure | mechanism §6 | `core/src/tools/spec_plan.rs:1120-1150`; `core/src/tools/handlers/multi_agents_spec.rs:102-119,409-438` | `hide_spawn_agent_metadata`; `spawn_agent_output_schema_v2` |
+| V2 rejects `fork_context`, and `followup_task` cannot target the root agent | mechanism §6 | `core/src/tools/handlers/multi_agents_v2/spawn.rs:283-289,320-330`; `core/src/tools/handlers/multi_agents_v2/message_tool.rs:11-23,72-80` | `fork_context is not supported in MultiAgentV2` |
+| `is_non_root_agent` covers internal sessions as well as subagents, so both are excluded from `send_user_message_async` | SKILL default surface | `protocol/src/protocol.rs:2723-2728`; `core/src/tools/spec_plan.rs:1040-1048` | `fn is_non_root_agent` |
 
 ---
 
@@ -266,14 +315,18 @@ codex exec --json -s read-only -c approval_policy=never --skip-git-repo-check --
    ```
    git log --oneline <pinned>..HEAD -- \
      codex-rs/app-server codex-rs/app-server-protocol codex-rs/apply-patch codex-rs/cli \
-     codex-rs/code-mode codex-rs/code-mode-protocol codex-rs/code-mode-runtime \
-     codex-rs/codex-mcp \
-     codex-rs/config codex-rs/context-fragments codex-rs/core codex-rs/exec \
-     codex-rs/execpolicy codex-rs/ext codex-rs/features codex-rs/hooks \
-     codex-rs/linux-sandbox codex-rs/models-manager codex-rs/network-proxy \
+     codex-rs/cloud-config codex-rs/code-mode codex-rs/code-mode-protocol \
+     codex-rs/code-mode-runtime codex-rs/codex-api codex-rs/codex-mcp \
+     codex-rs/config codex-rs/connectors codex-rs/context-fragments codex-rs/core \
+     codex-rs/core-plugins codex-rs/exec codex-rs/exec-server \
+     codex-rs/execpolicy codex-rs/ext codex-rs/features codex-rs/git-utils codex-rs/hooks \
+     codex-rs/linux-sandbox codex-rs/login codex-rs/mcp-server codex-rs/memories \
+     codex-rs/model-provider codex-rs/model-provider-info \
+     codex-rs/models-manager codex-rs/network-proxy \
      codex-rs/plugin codex-rs/process-hardening codex-rs/prompts codex-rs/protocol \
      codex-rs/sandboxing codex-rs/secrets codex-rs/shell-command codex-rs/shell-escalation \
-     codex-rs/skills codex-rs/tools codex-rs/utils codex-rs/windows-sandbox-rs
+     codex-rs/skills codex-rs/state codex-rs/tools codex-rs/tui codex-rs/utils \
+     codex-rs/windows-sandbox-rs
    ```
 
    Regenerate this list from the **Source** column whenever rows are added, rather than editing it by hand.
@@ -288,13 +341,21 @@ codex exec --json -s read-only -c approval_policy=never --skip-git-repo-check --
 
 Both gaps the previous pass left open are closed. `codex-rs/core-skills` no longer exists — `ext/skills` is the only skills render path, so its budget, its aliasing and its catalog-warning behavior are the whole story rather than one of two. The `.git` / `.agents` / `.codex` carve-out is one shared list enforced on all three platforms: Linux materializes a missing protected path as a synthetic empty read-only mount, macOS emits deny regexes whether or not the path exists, and Windows renders it as deny ACEs — but only when the off-by-default sandbox backend runs, and only for paths that already exist, so a missing `.codex` gets no Windows deny ACE at all.
 
+**All five open items from the previous pass are now CLOSED**, traced against this same pin:
+
+- **AGENTS.md sandboxed-read hard fail — closed.** The caller chain is traced (row above). It is fatal at session init through `thread/start` and ends a later turn with an error event *before sampling*, so the model never sees it. The deliberate absence of a triage-table row therefore stands, now for a known reason rather than an untraced one; the fact lives in SKILL.md's outside playbook and mechanism §1 only.
+- **`unified_exec_zsh_fork` consumers — closed.** `UnifiedExecShellMode::for_session` is the sole production consumer, called from `turn_context.rs:652-657`, `session.rs:1167-1178` and `review.rs:35-40`. `Stage::Removed` + `default_enabled: true` is lifecycle metadata, not enforcement: ordinary config still overrides it and managed config can pin it off. The existing off-by-default row and mechanism §3 text were correct and are unchanged. (Also recorded: remote environments and failed bridge preparation use Direct mode regardless.)
+- **Code-mode host resolution and fallback — closed, and it corrected a defect.** SKILL.md's detection line claimed the tool list is *only* `exec` and `wait`; that was false and is fixed. A `code_mode_only` session keeps every `DirectModelOnly` tool plus all hosted tools. Fallback is asymmetric: ordinary `CodeMode` degrades to `Direct` when the host binary is missing, `CodeModeOnly` never does.
+- **`multi_agent_v2` flags — closed.** `non_code_mode_only` and `hide_spawn_agent_metadata` are both traced, along with the V1/V2 behavioral differences, now tabulated in mechanism §6.
+- **`send_user_message_async` — closed.** Every clause verified; the one correction is that `is_non_root_agent` covers `SessionSource::Internal(_)` as well as subagents, so both prose files now say "subagents and internal sessions".
+
 What this pass did not cover:
 
-- The exec-policy, approval-gate, sandboxing and subsystem clusters got an anchor-by-anchor re-read at this pin. Even inside step 1's list the walk was anchor-scoped rather than crate-wide: `app-server` was read only at the two files cited, `models-manager` only at `models.json`. `tui` and `login` are cited nowhere in this table and were triaged by subject line only; `codex-mcp` and `ext/history-notes` were read only at the files cited.
-- The AGENTS.md sandboxed-read hard-fail (`core/src/agents_md.rs:120`) was confirmed at the error arm; its caller was not traced. The string is recorded; **the user- or model-visible surface it eventually produces is unknown.** Do not promote it to a triage-table row until someone traces `load_project_instructions`'s callers.
-- `unified_exec_zsh_fork` sits at `Stage::Removed` with `default_enabled: true` **and is still a live gate**: `UnifiedExecShellMode::for_session` ANDs it with `ShellTool`, `UnifiedExec` and `ShellZshFork`, and `tool_config_tests.rs` asserts that disabling either zsh-fork flag forces Direct mode. A previous pass read the feature spec alone and wrongly concluded it had stopped gating. What is still untraced is whether any other consumer reads the flag independently of `for_session`.
-- Code mode's host-process resolution and its missing-host fallback were not read. The prose says only that a separate host process exists.
-- `multi_agent_v2` (Stable, default off) exists alongside the default-enabled `multi_agent`, and both prose files now name the version-resolution order and V2's tool set. Untraced: V2's own handlers beyond their registration, and what `multi_agent_v2.non_code_mode_only` and `hide_spawn_agent_metadata` change for the model.
+- **Crate coverage in this sweep was uneven, and mostly HEAD-first source reading rather than a diff walk.** Four crate groups were swept. `tui`: 191 in-range commits reduced by file-intersection grep to ~20 candidates, 13 diffs opened; ~170 rendering/layout/keymap/telemetry commits were never opened, and neither were the app-server request processors or the hooks-browser. `login`/`aws-auth`/`chatgpt`: all 23 subjects read, 4 full diffs, 8 stat-plus-HEAD, 7 subject-only, 4 never opened; not covered at all are aws-auth signing internals, `login/src/server.rs` and the device-code/PKCE flows, and the app-server account/Bedrock RPC surface. `codex-mcp` + `core/src/mcp_tool_call.rs` + related: 78 commits, 3 full diffs and 2 partial, ~17 by message+stat; `connection_manager.rs` and `runtime.rs` were read only at grepped sites, and `catalog.rs`, `rmcp_client.rs`, `binding.rs`, `resource_client.rs`, `codex_apps/`, `server.rs` and `tool_catalog_cache.rs` were never opened; the MCP OAuth cluster (9 commits), Codex Apps hosted-file-upload, telemetry, and rmcp upgrades were triaged by subject and rejected without reading source. `ext`: all 153 subjects read but only 6 diffs; the never-documented small crates (connectors, git-attribution, image-generation, queue, goal, web-search, ext/mcp, ext/agent) were read end-to-end at HEAD instead.
+- **`ext/skills` is the loudest remaining gap.** It is the largest crate in `ext` (81 files) and the subject of roughly 40 in-range commits, and its in-range commits were triaged by subject line only, with no diff walk. The sourced rows above (`render.rs`, `extension.rs`, `host_roots.rs`, `tools/list.rs`, `tools/read.rs`) were read at HEAD at the cited sites and stand; what is missing is the change history around them. This skill makes several load-bearing skills claims (catalog budget, description shortening, explicit-only omission, locator aliasing); a new skills-surface behavior could be hiding there and this pass would not have seen it.
+- **`ext/memories` was not opened at all** (19 files). The off-by-default table covers the flag; nothing covers its runtime surface. `ext/extension-api` (26 files) was sampled, not read.
+- Even inside the re-verification command's directory list the walk stays anchor-scoped rather than crate-wide: `app-server` was read only at the files cited, `models-manager` only at `models.json`.
+- Three specific questions are carried forward for the next pass: (a) whether MCP tool results are truncated for the model separately from the 1 MiB event cap (`MCP_TOOL_CALL_EVENT_RESULT_MAX_BYTES`); (b) the hooks engine's new `mcp_tool` handler type, which lets a hook invoke an MCP server tool as its handler with SessionEnd MCP hooks skipped and a startup warning — genuinely doc-worthy for the hooks material and not yet filed; (c) `protocol/src/tool_name.rs` non-default namespaces concatenating without a separator in `Display`, which does not affect existing claims (default-namespace tools still display as bare names) but is worth someone's attention.
 - Guardian V2 config surface, PSP routing, the Bedrock provider and the gRPC/WebSocket transport series were reviewed and rejected as not model-visible. Recorded so the next pass does not re-litigate them.
 
 ### Traps
