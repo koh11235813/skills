@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `c9b19deb09`, 2026-08-23.
+**Pinned:** codex-rs `main` @ `8e6a44b428`, 2026-09-04.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
@@ -135,7 +135,8 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | The `on-request` announcement forbids destructive prefix rules | mechanism §1, §2 | `prompts/templates/permissions/approval_policy/on_request.md:50` | `NEVER provide a prefix_rule argument` |
 | **Managed "force exact value" is an open set** | SKILL Layer 0, mechanism Layer 0 | `core/src/config/requirements.rs:29-49` | `allow_login_shell` |
 | **Model catalog `tool_mode` is read first, with no local override** | SKILL Layer 0, mechanism Layer 0 | `core/src/tools/mod.rs:67-77,79` | `effective_tool_mode` |
-| …and the shipped catalog uses it | SKILL Layer 0, mechanism Layer 0 | `models-manager/models.json:20,151,277,399,517,1082` | `"tool_mode": "code_mode_only"` |
+| …and the shipped catalog uses it for seven slugs | SKILL Layer 0, mechanism Layer 0 | `models-manager/models.json:20,189,320,446,572,690,1255` | `"tool_mode": "code_mode_only"` |
+| …including the highest-priority visible preset, so an unconfigured session is in code mode | mechanism Layer 0 | `models-manager/models.json:173,189` | `"slug": "gpt-5.6-sol"` |
 | Goal steering pushes back on scope shrinking | mechanism §1 | `prompts/templates/goals/continuation.md:27` | `Do not substitute a narrower` |
 | Periodic timestamp reminder | mechanism §1 | `core/src/context/current_time_reminder.rs:28-30,35-37` | `<current_time_reminder>` |
 | A saved prefix rule or network rule is echoed back as a context fragment | mechanism §1, §2 | `core/src/context/approved_command_prefix_saved.rs:22`; `core/src/context/mod.rs:3,25,43-44,75` | `approved_command_prefix_saved`; `NetworkRuleSaved` |
@@ -161,6 +162,8 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Claim | Where it ships | Source | Match on |
 |---|---|---|---|
 | Exec results are framed with exit code and wall time | mechanism §4 | `core/src/tools/mod.rs:109` | `Wall time:` |
+| A spawn failure reaches the model as `exec_command failed: {err:?}` with no command echoed | SKILL triage, mechanism §4 | `core/src/tools/handlers/unified_exec/exec_command.rs:460` | `exec_command failed: ` |
+| …and the whole message is middle-truncated at 900 bytes | mechanism §4 | `core/src/tools/handlers/unified_exec/exec_command.rs:57,461-464` | `EXEC_COMMAND_REJECTION_MAX_BYTES` |
 | Timeout prefix | mechanism §4 | `core/src/tools/mod.rs:134` | `command timed out after` |
 | PostToolUse can swap visible text while retaining the original | mechanism §4 | `core/src/tools/registry.rs:212-217,730` | `PostToolUseFeedbackOutput` |
 | Unknown tool name | SKILL triage, mechanism §2 | `core/src/tools/registry.rs:818` | `unsupported call:` |
@@ -229,8 +232,9 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | zsh-fork backends are under development, default off | SKILL off-by-default table | `features/src/lib.rs:860-865` | `shell_zsh_fork` |
 | Per-exec denial wording | SKILL triage, mechanism §2 | `shell-escalation/src/unix/escalate_client.rs:118` | `Execution denied:` |
 | Memories are stable but default off | SKILL off-by-default table | `features/src/lib.rs:992-997` | `"memories"` |
-| The shell surface is exactly `exec_command` + `write_stdin` | mechanism §2 | `core/src/tools/spec_plan.rs:958,977,985` | `fn add_shell_tools` |
-| …and is conditional on four gates | mechanism §2 | `core/src/tools/spec_plan.rs:962-969` | `Feature::UnifiedExec` |
+| The full shell surface is `exec_command` + `write_stdin` | mechanism §2 | `core/src/tools/spec_plan.rs:1075,1099-1101` | `fn add_shell_tools` |
+| …conditional on three gates, and `unified_exec` off degrades to a one-shot `exec_command` rather than removing the surface | mechanism §2 | `core/src/tools/spec_plan.rs:1080-1085,1102-1106` | `registry.add(ExecCommandHandler::one_shot` |
+| The one-shot spec drops `tty`, `yield_time_ms` and the returned `session_id`, and adds `timeout_ms` defaulting to 10,000 ms | mechanism §2 | `core/src/tools/handlers/unified_exec/exec_command.rs:102,470-497` | `fn one_shot_exec_command_spec` |
 | `shell_tool` and `unified_exec` are Stable/default-enabled | mechanism §2 | `features/src/lib.rs:836-841,854-859` | `key: "unified_exec"` |
 | `unified_exec_zsh_fork` is `Removed`/default-true **but still a live gate**: zsh-fork mode ANDs `ShellTool`, `UnifiedExec`, `ShellZshFork` and `UnifiedExecZshFork` | SKILL off-by-default table, mechanism §3 | `tools/src/tool_config.rs:41-75`; `features/src/lib.rs:866-871` | `fn for_session`; `UnifiedExecShellMode` |
 | …and a regression test asserts that disabling either zsh-fork flag forces Direct mode | mechanism §3 | `tools/src/tool_config_tests.rs:25,43-64` | `unified_exec_shell_mode_respects_feature_and_policy_gates` |
@@ -239,7 +243,8 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | `shell_command` survives as a legacy catalog alias for unified exec | mechanism §2 | `protocol/src/openai_models.rs:300` | `alias = "shell_command"` |
 | App-server `thread/shellCommand` runs unsandboxed with full access | SKILL outside playbook, mechanism §2 | `app-server-protocol/src/protocol/common.rs:653`; `app-server-protocol/src/protocol/v2/thread.rs:1122-1128` | `runs unsandboxed with full` |
 | Code mode runs in a separate host process | mechanism §6 | `code-mode/src/remote_session.rs:39,48,183` | `OwnedCodeModeHost` |
-| Guardian review injects a bounded root-conversation authorization block | mechanism §6 | `core/src/guardian/prompt.rs:222` | `ROOT CONVERSATION START` |
+| Guardian review injects a bounded root-conversation authorization block | mechanism §6 | `guardian-context/src/authorization.rs:55-66` | `ROOT CONVERSATION START` |
+| The block also carries host-verified `request_user_input` answers, the verified paths of user-owned skills invoked on the latest root user turn, and an incomplete-evidence marker | mechanism §6 | `core/src/agent/control/user_authorization.rs:71-88`; `core/src/context/guardian_review_evidence.rs:183,237` | `GuardianRootMessage::IncompleteVerifiedAnswers`; `trusted_skill_paths` |
 | `wait_agent` clamps a too-short timeout | mechanism §6 | `core/src/tools/handlers/multi_agents_v2/wait.rs:148` | `was clamped to the minimum of` |
 | apply_patch refuses duplicate resolved paths | SKILL triage, mechanism §2 | `apply-patch/src/invocation.rs:237` | `multiple operations target` |
 | apply_patch disables symlink traversal when the sandbox is bypassed | mechanism §2 | `core/src/tools/runtimes/apply_patch.rs:183` | `follow_symlinks` |
@@ -247,11 +252,13 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Managed requirements inject `<managed_developer_instructions>` as a separate developer message, replacing or removing the prior block | SKILL Layer 0 | `core/src/context/world_state/managed_developer_instructions.rs:14-16,32-45`; `core/src/session/mod.rs:3737-3743` | `REPLACEMENT_NOTICE`; `managed_developer_instructions` |
 | …and a rendered block over 10,000 estimated tokens is rejected at config load | SKILL Layer 0 | `core/src/context/world_state/managed_developer_instructions.rs:13,67-76` | `MAX_MANAGED_DEVELOPER_INSTRUCTIONS_TOKENS` |
 | `history.*` / `notes.*` need `use_history_notes_extension`, an OpenAI provider, and Codex-backend auth | SKILL off-by-default table, mechanism §6 | `ext/history-notes/src/extension.rs:33-40` | `use_history_notes_extension` |
-| …and register direct-model-only; history is bounded/read-only/eventually consistent, notes are virtual/writable/strongly consistent | SKILL off-by-default table, mechanism §6 | `ext/history-notes/src/tools.rs:25-38,376` | `NOTES_DESCRIPTION`; `MAX_HISTORY_WINDOWS` |
+| …and register direct-model-only; history is read-only and eventually consistent, notes are virtual/writable/strongly consistent | SKILL off-by-default table, mechanism §6 | `ext/history-notes/src/tools.rs:25-38` | `NOTES_DESCRIPTION` |
+| The client-side history/notes caps are gone: arguments and the turn's truncation policy are forwarded to the backend, which enforces its own limits | mechanism §6 | `ext/history-notes/src/tools.rs:142-235,261-284` | `call.truncation_policy` |
 | An attached environment independently constrains MCP authority; pending/failed attachments expose no environment-owned servers | mechanism §6 | `core/src/mcp.rs:272-300` (call site); `codex-mcp/src/catalog.rs:337` (definition) | `build_with_environment_authority` |
 | …and a restricted attachment disables non-matching servers and empty-policy plugin registrations | mechanism §6 | `codex-mcp/src/catalog.rs:340-378` | `McpEnvironmentAuthority::Restricted` |
-| `send_user_message_async` is catalog-gated and root-session-only | SKILL default surface, mechanism Layer 0 | `core/src/tools/spec_plan.rs:1040-1048` | `SendUserMessageAsyncHandler`; `is_non_root_agent` |
-| …and it returns immediately while the turn continues | SKILL default surface | `core/src/tools/handlers/send_user_message_async.rs:44-47,81-95` | `"accepted":true` |
+| `request_user_input_async` is catalog-gated and root-session-only, and the catalog still advertises it under the old `send_user_message_async` name | SKILL default surface, mechanism Layer 0 | `core/src/tools/spec_plan.rs:1162-1185` | `"request_user_input_async" \| "send_user_message_async"` |
+| `send_message_to_user_async` is a second, independently catalog-gated async tool for free-form text | SKILL default surface, mechanism Layer 0 | `core/src/tools/spec_plan.rs:1187-1195`; `core/src/tools/handlers/send_message_to_user_async.rs:21,45` | `tool == "send_message_to_user_async"` |
+| …and both return immediately while the turn continues | SKILL default surface | `core/src/tools/handlers/request_user_input_async.rs:136`; `core/src/tools/handlers/send_message_to_user_async.rs:98` | `"accepted":true` |
 | Quoting a glob preserves it as a literal argv token rather than expanding it | SKILL inside playbook | `shell-command/src/bash.rs:451-470` | `preserves_quoted_literals` |
 | `uses_codex_backend()` is false only for `ApiKey` and `BedrockApiKey` | SKILL default surface | `protocol/src/auth.rs:45-56` | `fn uses_codex_backend` |
 | …consumed by the apps gate, connectors, the plugin marketplace, app routing, the cloud bundle and history/notes | SKILL default surface, mechanism §6 | `core/src/session/turn_context.rs:349-357`; `core/src/connectors.rs:445`; `core-plugins/src/manager.rs:562-568,642-644`; `core-plugins/src/app_mcp_routing.rs:6-19`; `cloud-config/src/service.rs:48-56`; `ext/history-notes/src/extension.rs:40` | `apps_enabled_for_auth` |
@@ -277,36 +284,46 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Ordinary `CodeMode` falls back to `Direct` when the host is unavailable; `CodeModeOnly` never does, and the host failure reaches the model as tool output | SKILL Layer 0, mechanism §6 | `core/src/tools/mod.rs:79-89`; `core/src/tools/code_mode/mod.rs:101-114`; `core/src/tools/code_mode/execute_handler.rs:65-77` | `disable_in_process_fallback`; `Code mode will fail closed` |
 | `hide_spawn_agent_metadata` drops `service_tier` from the spawn schema and the nickname from the result; `non_code_mode_only` selects `DirectModelOnly` exposure | mechanism §6 | `core/src/tools/spec_plan.rs:1120-1150`; `core/src/tools/handlers/multi_agents_spec.rs:102-119,409-438` | `hide_spawn_agent_metadata`; `spawn_agent_output_schema_v2` |
 | V2 rejects `fork_context`, and `followup_task` cannot target the root agent | mechanism §6 | `core/src/tools/handlers/multi_agents_v2/spawn.rs:283-289,320-330`; `core/src/tools/handlers/multi_agents_v2/message_tool.rs:11-23,72-80` | `fork_context is not supported in MultiAgentV2` |
-| `is_non_root_agent` covers internal sessions as well as subagents, so both are excluded from `send_user_message_async` | SKILL default surface | `protocol/src/protocol.rs:2723-2728`; `core/src/tools/spec_plan.rs:1040-1048` | `fn is_non_root_agent` |
+| `is_non_root_agent` covers internal sessions as well as subagents, so both are excluded from the async user tools | SKILL default surface | `protocol/src/protocol.rs:2723-2728`; `core/src/tools/spec_plan.rs:1162,1187` | `fn is_non_root_agent` |
+| A child's service tier is overwritten with the root thread's after the role is applied, so a role's `service_tier` is never effective | SKILL default surface, mechanism §6 | `core/src/tools/handlers/multi_agents_common.rs:322-350`; `core/src/tools/handlers/multi_agents/spawn.rs:106-108`; `core/src/tools/handlers/multi_agents_v2/spawn.rs:136-145` | `fn apply_spawn_agent_service_tier` |
+| …and a child model that does not support the root's tier receives none | mechanism §6 | `core/src/tools/handlers/multi_agents_common.rs:344-348` | `supports_service_tier` |
 
 ---
 
 ## Empirically verified
 
-Confirmed by running the CLI on macOS, not by reading source. These are the highest-confidence rows in this file, and the commands are cheap to repeat. The `codex debug prompt-input` rows were re-run at this pin on `codex-cli 0.150.0-alpha.6` (checkout tag `rust-v0.150.0-alpha.7`): the marker names and the `never` and `on-request` announcement text are unchanged. The three `codex exec` probe rows were **not** re-run this pass — they are carried over from `codex-cli 0.146.0-alpha.10` at the previous pin.
-
-`codex debug prompt-input` renders the model-visible prompt as JSON with **no model call**, which makes every injected-context claim verifiable for free.
+Run on 2026-09-04 against the installed `codex-cli 0.154.0-alpha.2` (built from a tree close to, but not identical with, the pinned commit). Two probe sessions were driven through `codex mcp-server` (`approval_policy = never`, `sandbox_mode = read-only`): one with no model override, one with `model = gpt-5.6-sol`. Prompt composition was dumped with `codex debug prompt-input`; raw dumps and probe transcripts are not checked in.
 
 | Claim | How it was confirmed | Result |
 |---|---|---|
-| `<permissions instructions>`, `<environment_context>`, `# AGENTS.md instructions` markers are real | `codex debug prompt-input` | All three present |
-| The permissions announcement discloses sandbox mode, read/write scope, and network state up front | same | Confirmed — `` `sandbox_mode` is `workspace-write` … Network access is restricted `` |
+| `<permissions instructions>`, `<environment_context>`, `# AGENTS.md instructions` markers are real | `codex debug prompt-input` | All three present, in that order across two developer messages and one user message |
+| Further harness-authored developer fragments exist: `<skills_instructions>`, `<apps_instructions>`, `<plugins_instructions>`, `<multi_agent_mode>` | same | All four present; each message carries a `content_item_kinds` metadata list naming its fragments (`host_skills.instructions`, `permissions.instructions`, `apps.instructions`, `plugins.usage_instructions`, `multi_agent.usage_hint`, `multi_agent.mode_instructions`, `plugins.recommendations`, `agents_md.instructions`, `environments.environment_context`) |
+| One developer fragment carries no marker at all | same | The multi-agent usage hint (`You are `/root`, the primary agent in a team of agents…`) is plain text with no wrapper; it states the concurrency-slot count and that collaboration tools are absent from the `functions.exec` `tools.*` namespace |
+| `<recommended_plugins>` is a user-role fragment | same | Present, user role, listing plugins available but not installed |
+| The AGENTS.md body is wrapped in `<INSTRUCTIONS>` | same | `# AGENTS.md instructions` is followed by `<INSTRUCTIONS>…</INSTRUCTIONS>` around the collected text |
+| `<environment_context>` is structured XML with a filesystem permission profile | same | `<cwd>`, `<shell>`, `<current_date>`, `<timezone>`, then `<filesystem><workspace_roots>…<permission_profile type="managed"><file_system type="restricted">` with `<entry access="read|write">` rows; each workspace root's `.git`, `.agents` and `.codex` appear as explicit read-only entries; `:root`, `:slash_tmp`, `:tmpdir` appear as `<special>` values. Under `read-only` the profile collapses to a single `read :root` entry. No network domain lists appeared in either dump |
+| The permissions announcement discloses sandbox mode, read/write scope, and network state up front | same | Confirmed — `` `sandbox_mode` is `workspace-write` … Network access is restricted `` followed by `The writable roots are …` |
+| The announcement lists already-approved prefix rules verbatim | same | `## Approved command prefixes` enumerates the user's persisted rules as JSON arrays |
 | The `never` announcement text | `codex debug prompt-input -c approval_policy=never -c sandbox_mode=read-only` | Verbatim: ``Approval policy is currently never. Do not provide the `sandbox_permissions` for any reason, commands will be rejected.`` |
-| The `on-request` announcement forbids destructive prefix rules | `codex debug prompt-input` (default policy) | Verbatim: `NEVER provide a prefix_rule argument for destructive commands like rm.` |
-| Under `never`, the escalation instructions are removed entirely rather than reworded | compare the two dumps above | Confirmed — the whole "How to request escalation" section is absent |
-| Host skill paths are aliased under metadata pressure | `codex debug prompt-input` | Confirmed — skills render as `(file: r0/<skill>/SKILL.md)` |
-| Escalation is requested via `sandbox_permissions: "require_escalated"` | same | Confirmed in the on-request announcement |
-| **`approval_policy = "untrusted"` is a startup error, not a mode** | `codex debug prompt-input -c approval_policy=untrusted` | Verbatim: `Error: approval_policy = "untrusted" is no longer supported; remove this setting` |
-| **OS-jail denials reach the model as unwrapped, verbatim command stderr** | `codex exec -s read-only -c approval_policy=never` attempting `touch /tmp/…` — carried over, not re-run | Model saw exactly `touch: /tmp/codex_probe_a.txt: Operation not permitted` |
-| **Policy rejections reach the model nested in a spawn-error wrapper** | same run — carried over, not re-run | Model saw `` exec_command failed for `/bin/zsh -c '…'`: CreateProcess { message: "Rejected(\"approval required by policy, but AskForApproval is set to Never\")" } `` |
-| **The forced-rm reason does not fire for every `rm -rf`** | same run — carried over, not re-run | A shell-wrapped `rm -rf` under `never` produced the generic reason, not `rm -f style commands are not permitted` |
+| The `on-request` announcement forbids destructive and heredoc prefix rules | `codex debug prompt-input` (default policy) | Verbatim: `NEVER provide a prefix_rule argument for destructive commands like rm.` and `NEVER provide a prefix_rule if your command uses a heredoc or herestring.` |
+| Under `never`, the escalation instructions are removed entirely rather than reworded | compare the two dumps above | Confirmed — the announcement shrinks from 5,056 to 341 characters and the whole "How to request escalation" section is absent |
+| Escalation is requested via `sandbox_permissions: "require_escalated"` | same | Confirmed in the on-request announcement, together with a required `justification` and optional `prefix_rule` |
+| **A default session is in code mode** | `codex mcp-server` probe with no model override | Direct tools were exactly `functions.exec`, `functions.wait`, `functions.request_user_input`, the six `collaboration.*` tools and two `mcp__cua_repl.*` tools; `shell_command` was absent and `exec_command` / `apply_patch` were reachable only as `tools.exec_command(...)` / `tools.apply_patch(...)` inside `functions.exec`. `gpt-5.6-sol` produced the identical list |
+| Nested tool inventory is discoverable from inside `functions.exec` | same | `ALL_TOOLS` returned `apply_patch`, `exec_command`, `write_stdin`, `view_image`, `update_plan`, `request_plugin_install`, `image_gen__imagegen`, `read_mcp_resource`, `list_mcp_resources`, `list_mcp_resource_templates` and every `mcp__<server>__<tool>` entry |
+| **OS-jail denials reach the model as unwrapped, verbatim command stderr** | probe: `touch /tmp/codex_probe_a.txt` via nested `exec_command` | Model saw `{"chunk_id":"…","exit_code":1,"original_token_count":14,"output":"touch: /tmp/codex_probe_a.txt: Operation not permitted\n"}` |
+| **Policy rejections reach the model nested in a spawn-error wrapper** | probe: `rm -rf /tmp/codex_probe_dir` | Confirmed in shape only — the model reported a wrapper carrying `Rejected("approval required by policy, but AskForApproval is set to Never")` inside a debug-formatted blob. **Do not quote its wrapper text**: see the trap below |
+| **A denied nested call is a rejected promise, and an uncaught one fails the whole script** | same, both sessions | The `gpt-5.6-sol` session let it propagate and got `Script failed` with the error under `Script error:`; the default session caught it and got `Script completed` with the same error under `Output:` |
+| **The forced-rm reason does not fire for every `rm -rf`** | same | A shell-wrapped `rm -rf` under `never` produced the generic policy reason, not `rm -f style commands are not permitted` |
+| The model will not request escalation under `never` | probe step asking for a `require_escalated` run | Both sessions refused to issue the call, citing the announcement; no rejection string was produced because none was sent |
+| A 20,000-character nested `exec_command` output is not truncated at that size | probe: `echo` of 20,000 `x` | 20,001 characters returned with no marker, `original_token_count: 5001` |
 
-Reproduce the exec probe with:
+Reproduce the prompt dumps with `codex debug prompt-input` and `codex debug prompt-input -c approval_policy=never -c sandbox_mode=read-only`. Reproduce the exec probe by driving `codex mcp-server` (or `codex exec --json -s read-only -c approval_policy=never --skip-git-repo-check --ephemeral`) with:
 
 ```
-codex exec --json -s read-only -c approval_policy=never --skip-git-repo-check --ephemeral \
-  "run: touch /tmp/probe_a.txt ; then run: rm -rf /tmp/probe_dir ; quote both errors verbatim, do not retry"
+This is a harness introspection probe. Report the exact names of every tool available to you and whether exec_command/apply_patch are direct or nested. Then run: touch /tmp/codex_probe_a.txt ; then run: rm -rf /tmp/codex_probe_dir ; quote both errors verbatim, do not retry. Then echo a 20000-character string of x and report the returned length and any truncation marker.
 ```
+
+**A probe model cannot be trusted to quote an error string.** Both probe sessions independently reported the policy rejection as `` exec_command failed for `/bin/zsh -c '…'`: CreateProcess { … } `` — the shape this document itself claimed at the previous pin. That string does not exist: the only site that builds this message is `format!("exec_command failed: {err:?}")`, the fragment `exec_command failed for` appears nowhere in the tree, and the probe binary's own strings contain the new form and not the old one. The model reproduced a documented-looking shape rather than the bytes it received, which means a probe can silently confirm whatever the docs already say. Take verbatim strings from source; use probes only for structure that source cannot show — which tools are exposed, whether a denial arrives wrapped or bare, whether an uncaught rejection ends the script, whether output was truncated at all.
 
 ## Re-verification procedure
 
@@ -314,19 +331,19 @@ codex exec --json -s read-only -c approval_policy=never --skip-git-repo-check --
 
    ```
    git log --oneline <pinned>..HEAD -- \
-     codex-rs/app-server codex-rs/app-server-protocol codex-rs/apply-patch codex-rs/cli \
+     codex-rs/agent-roles codex-rs/app-server codex-rs/app-server-protocol codex-rs/apply-patch codex-rs/cli \
      codex-rs/cloud-config codex-rs/code-mode codex-rs/code-mode-protocol \
      codex-rs/code-mode-runtime codex-rs/codex-api codex-rs/codex-mcp \
      codex-rs/config codex-rs/connectors codex-rs/context-fragments codex-rs/core \
      codex-rs/core-plugins codex-rs/exec codex-rs/exec-server \
-     codex-rs/execpolicy codex-rs/ext codex-rs/features codex-rs/git-utils codex-rs/hooks \
+     codex-rs/execpolicy codex-rs/ext codex-rs/features codex-rs/git-utils codex-rs/guardian-context codex-rs/hooks \
      codex-rs/linux-sandbox codex-rs/login codex-rs/mcp-server codex-rs/memories \
      codex-rs/model-provider codex-rs/model-provider-info \
      codex-rs/models-manager codex-rs/network-proxy \
      codex-rs/plugin codex-rs/process-hardening codex-rs/prompts codex-rs/protocol \
-     codex-rs/sandboxing codex-rs/secrets codex-rs/shell-command codex-rs/shell-escalation \
+     codex-rs/rmcp-client codex-rs/sandboxing codex-rs/secrets codex-rs/shell-command codex-rs/shell-escalation \
      codex-rs/skills codex-rs/state codex-rs/tools codex-rs/tui codex-rs/utils \
-     codex-rs/windows-sandbox-rs
+     codex-rs/windows-sandbox-rs codex-rs/windows-sandbox-service codex-rs/worktree
    ```
 
    Regenerate this list from the **Source** column whenever rows are added, rather than editing it by hand.
@@ -339,24 +356,24 @@ codex exec --json -s read-only -c approval_policy=never --skip-git-repo-check --
 
 ### Known gaps in the current pass
 
-Both gaps the previous pass left open are closed. `codex-rs/core-skills` no longer exists — `ext/skills` is the only skills render path, so its budget, its aliasing and its catalog-warning behavior are the whole story rather than one of two. The `.git` / `.agents` / `.codex` carve-out is one shared list enforced on all three platforms: Linux materializes a missing protected path as a synthetic empty read-only mount, macOS emits deny regexes whether or not the path exists, and Windows renders it as deny ACEs — but only when the off-by-default sandbox backend runs, and only for paths that already exist, so a missing `.codex` gets no Windows deny ACE at all.
+**This pass was scoped deliberately, and the scope is the largest gap.** Two independent sweeps of `c9b19deb09..8e6a44b428` (roughly 540 commits) were run: a 22-agent survey against the local checkout, and a separate audit run by a Codex session against `origin/main`. Between them they produced about 190 candidate corrections. Only the subset that made an existing statement **false** was applied here, seven areas in all: the exec rejection wrapper, `unified_exec` degradation, the async user tools, subagent service tier, Guardian authorization evidence, the history/notes caps, and the empirical section. Everything else the two sweeps found is real, verified, and **not yet in these files**.
 
-**All five open items from the previous pass are now CLOSED**, traced against this same pin:
+The largest unapplied clusters, so the next pass does not rediscover them:
 
-- **AGENTS.md sandboxed-read hard fail — closed.** The caller chain is traced (row above). It is fatal at session init through `thread/start` and ends a later turn with an error event *before sampling*, so the model never sees it. The deliberate absence of a triage-table row therefore stands, now for a known reason rather than an untraced one; the fact lives in SKILL.md's outside playbook and mechanism §1 only.
-- **`unified_exec_zsh_fork` consumers — closed.** `UnifiedExecShellMode::for_session` is the sole production consumer, called from `turn_context.rs:652-657`, `session.rs:1167-1178` and `review.rs:35-40`. `Stage::Removed` + `default_enabled: true` is lifecycle metadata, not enforcement: ordinary config still overrides it and managed config can pin it off. The existing off-by-default row and mechanism §3 text were correct and are unchanged. (Also recorded: remote environments and failed bridge preparation use Direct mode regardless.)
-- **Code-mode host resolution and fallback — closed, and it corrected a defect.** SKILL.md's detection line claimed the tool list is *only* `exec` and `wait`; that was false and is fixed. A `code_mode_only` session keeps every `DirectModelOnly` tool plus all hosted tools. Fallback is asymmetric: ordinary `CodeMode` degrades to `Direct` when the host binary is missing, `CodeModeOnly` never does.
-- **`multi_agent_v2` flags — closed.** `non_code_mode_only` and `hide_spawn_agent_metadata` are both traced, along with the V1/V2 behavioral differences, now tabulated in mechanism §6.
-- **`send_user_message_async` — closed.** Every clause verified; the one correction is that `is_non_root_agent` covers `SessionSource::Internal(_)` as well as subagents, so both prose files now say "subagents and internal sessions".
+- **Approvals and Guardian**: Full Access short-circuits Guardian review entirely; an MCP elicitation marked `codex_sensitive_action` forces the synchronous path (but only after the earlier Full Access and user-CUA shortcuts, which it does not override); extension approval review splits into a fast decision and a full review with first-claim-wins; app approvals are keyed per connected account (`apps.<app>.links.<link_id>`), so an approval for one account is not reused for another.
+- **Tool surface**: `update_plan` is opt-in and absent by default, and disabling it strips codex's own checklist guidance from every bundled prompt; `write_stdin_approval` (under development, default off) gates input to a retained terminal and has its own rejection strings; the `clock.sleep` gate moved to a stable, default-on `sleep_tool` feature with an `always_on` mode; a `persistent` reasoning effort injects a `<persistent_mode>` developer fragment.
+- **MCP**: per-tool `output_token_limit` overrides truncation for one tool's output (this closes the carried question about MCP truncation, and the answer is that there are three independently budgeted views of one result, not two); `mcp_optional_startup_grace_ms` makes the optional-server startup grace configurable and `0` disables it; only an explicitly *mentioned* plugin's server is forced through startup; server errors are no longer flattened; attachment-owned servers capture an immutable owner permission profile.
+- **Hooks**: an `Interrupt` event now exists; a `mcp_tool` handler type lets a hook call an MCP server tool (this closes the second carried question); narrowly allowlisted bundled cleanup hooks run without a trust hash, survive hook disablement, and are hidden from listings, which is a real exception to the content-hash rule stated in SKILL.md's Layer 0.
+- **Skills**: `skills.list` and `skills.read` are bounded by the calling turn's response budget and have new model-visible omission strings; locator aliasing is now chosen whenever it is cheaper, so it is no longer a signal of budget pressure; a `$mention` injects at most 8,000 bytes of the skill body, silently.
+- **Injected context**: a real `codex debug prompt-input` dump at this pin contains `<skills_instructions>`, `<apps_instructions>`, `<plugins_instructions>`, `<multi_agent_mode>` and a user-role `<recommended_plugins>` that §1's fragment list does not mention; the AGENTS.md body is wrapped in `<INSTRUCTIONS>`; `<environment_context>` is structured XML carrying a `<permission_profile>`; and the multi-agent usage hint is a **second unmarked fragment** alongside IDE context, which contradicts §1's claim that IDE context is the only one.
+- **Executor platform**: command classification, `apply_patch` path authority and permission matching follow the *reported executor* platform rather than the host, and an unknown reported platform is treated as Windows.
+- Smaller, all verified and all unapplied: the `code_mode_only` catalog list is seven slugs (`gpt-6-astra` added); `CODEX_VERSION` is set in every command environment; `thread/shellCommand` takes a `timeoutMs` defaulting to one hour; an idle app-server thread unloads after 60 seconds; `BedrockAccessKeys` joins the non-Codex-backend auth arm; tool schemas drop `minimum`/`maximum`/`maxLength` before any size compaction; goal accounting includes descendants and auto-blocks after three failed exec turns; `codex exec --worktree` exists.
 
-What this pass did not cover:
+**A pre-existing error the recount found**: the Granular rejection row quotes `approval required by policy, but AskForApproval::Granular.rules is false`. The source says `approval required by policy rule, but …`. This was wrong at the previous pin too, and is not yet corrected.
 
-- **Crate coverage in this sweep was uneven, and mostly HEAD-first source reading rather than a diff walk.** Four crate groups were swept. `tui`: 191 in-range commits reduced by file-intersection grep to ~20 candidates, 13 diffs opened; ~170 rendering/layout/keymap/telemetry commits were never opened, and neither were the app-server request processors or the hooks-browser. `login`/`aws-auth`/`chatgpt`: all 23 subjects read, 4 full diffs, 8 stat-plus-HEAD, 7 subject-only, 4 never opened; not covered at all are aws-auth signing internals, `login/src/server.rs` and the device-code/PKCE flows, and the app-server account/Bedrock RPC surface. `codex-mcp` + `core/src/mcp_tool_call.rs` + related: 78 commits, 3 full diffs and 2 partial, ~17 by message+stat; `connection_manager.rs` and `runtime.rs` were read only at grepped sites, and `catalog.rs`, `rmcp_client.rs`, `binding.rs`, `resource_client.rs`, `codex_apps/`, `server.rs` and `tool_catalog_cache.rs` were never opened; the MCP OAuth cluster (9 commits), Codex Apps hosted-file-upload, telemetry, and rmcp upgrades were triaged by subject and rejected without reading source. `ext`: all 153 subjects read but only 6 diffs; the never-documented small crates (connectors, git-attribution, image-generation, queue, goal, web-search, ext/mcp, ext/agent) were read end-to-end at HEAD instead.
-- **`ext/skills` is the loudest remaining gap.** It is the largest crate in `ext` (81 files) and the subject of roughly 40 in-range commits, and its in-range commits were triaged by subject line only, with no diff walk. The sourced rows above (`render.rs`, `extension.rs`, `host_roots.rs`, `tools/list.rs`, `tools/read.rs`) were read at HEAD at the cited sites and stand; what is missing is the change history around them. This skill makes several load-bearing skills claims (catalog budget, description shortening, explicit-only omission, locator aliasing); a new skills-surface behavior could be hiding there and this pass would not have seen it.
-- **`ext/memories` was not opened at all** (19 files). The off-by-default table covers the flag; nothing covers its runtime surface. `ext/extension-api` (26 files) was sampled, not read.
-- Even inside the re-verification command's directory list the walk stays anchor-scoped rather than crate-wide: `app-server` was read only at the files cited, `models-manager` only at `models.json`.
-- Three specific questions are carried forward for the next pass: (a) whether MCP tool results are truncated for the model separately from the 1 MiB event cap (`MCP_TOOL_CALL_EVENT_RESULT_MAX_BYTES`); (b) the hooks engine's new `mcp_tool` handler type, which lets a hook invoke an MCP server tool as its handler with SessionEnd MCP hooks skipped and a startup warning — genuinely doc-worthy for the hooks material and not yet filed; (c) `protocol/src/tool_name.rs` non-default namespaces concatenating without a separator in `Display`, which does not affect existing claims (default-namespace tools still display as bare names) but is worth someone's attention.
-- Guardian V2 config surface, PSP routing, the Bedrock provider and the gRPC/WebSocket transport series were reviewed and rejected as not model-visible. Recorded so the next pass does not re-litigate them.
+What the sweeps themselves did not cover: the survey's per-slice reports each carry an honest `not_opened` list, and the coverage is uneven. Roughly 155 of 187 `tui` commits, about 90 of 160 `app-server` commits, and about 80 of 131 `protocol`/`features`/`config` commits were triaged from subject line plus file list without opening a diff. `ext/memories` was read at HEAD but its change history was not walked. Guardian V2's context composition, transcript retention and decision internals were read only at grepped sites.
+
+**The empirical rows have a different status than the source rows.** They were re-run at this pin, but the probe methodology failed in a way worth reading before trusting any future probe: see the note at the end of the empirical section.
 
 ### Traps
 
