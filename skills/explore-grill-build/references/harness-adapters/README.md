@@ -17,9 +17,9 @@ Do not infer behavior from a similarly named tool. A current-session failure blo
 
 | Adapter | Evidence | Last checked | Important fallback |
 |---|---|---|---|
-| Claude Code | Official docs (sub-agents, skills, worktrees, workflows, permission-modes, tools-reference) verified by live fetch, plus current-session observation | 2026-07-22 | Work sequentially or inline when write isolation, the codex review chain, or a needed skill is absent. |
-| Codex | Official subagent guidance and current-session capability checks | 2026-07-22 | Do work inline when delegation, read-only review, or writable artifacts are not exposed. |
-| OpenCode | Public docs and source commit `c9db6e9` | 2026-07-22 | Treat task permissions as controls, not write isolation; use sequential writes without an isolated worktree. |
-| Hermes Agent | Source commit `e57918a` and current-session delegation observation | 2026-07-22 | Do work inline or sequentially when `delegate_task` is unavailable or its runtime fails. |
+| Claude Code | Official docs (sub-agents, skills, worktrees, workflows, permission-modes, tools-reference), fetched 2026-07-22; current-session observation 2026-09-06 of persistent Agent/SendMessage, Codex MCP threads, and agmsg turn-hook/tmux delivery | 2026-09-06 | Work sequentially or inline when write isolation, persistent delivery/replies, the codex review chain, or a needed skill is absent. |
+| Codex | Official subagent guidance; current-session observation 2026-09-06 of persistent MCP/agmsg implementation, goal tools and TUI replacement, with turn-hook delivery confirmed and goal auto-termination unverified | 2026-09-06 | Do work inline when delegation, read-only review, or writable artifacts are not exposed; use explicit phase continuation when goal support is unconfirmed. |
+| OpenCode | Public docs and source commit `c9db6e9`; current-session observation 2026-09-06 that `/goal` is a plain prompt with no continuation | 2026-09-06 | Treat task permissions as controls, not write isolation; use sequential writes without an isolated worktree. |
+| Hermes Agent | Source commit `e57918a` and current-session delegation observation; current-session observation 2026-09-06 of `/goal` standing-goal continuation that did not self-terminate (judge error) | 2026-09-06 | Do work inline or sequentially when `delegate_task` is unavailable or its runtime fails. |
 
 Update the relevant adapter and this table together when new evidence changes a capability claim.

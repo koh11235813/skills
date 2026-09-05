@@ -20,7 +20,7 @@ This is a five-phase gauntlet. It's worth it for a feature with real design spac
 | 0 — Explore | Capability-gated discovery delegates survey the relevant codebase | A synthesized brief |
 | 1 — Grill | Auto-selected interview turns the brief + user intent into a concrete plan | A written plan document |
 | 2 — External plan review | An eligible strong reviewer, plus a weak-model probe when selectable, review the plan | Plan updated in place, go/no-go to build |
-| 3 — TDD build | Red → Green → Refactor via tracer-bullet slices and capability-gated delegates | Working, tested implementation |
+| 3 — TDD build | Red → Green → Refactor via tracer-bullet slices, with capability-gated slice fan-out or a manager loop | Working, tested implementation |
 | 4 — Review gate | Self-review → external diff review → explicit human go-ahead | Commit, or not |
 
 ## Runtime capability check
@@ -32,6 +32,7 @@ Before Phase 0, inspect the current runtime's visible tools, permissions, and wo
 - `delegate_parallel` — concurrent delegate dispatch plus a reliable join/result.
 - `delegate_model_select` — a genuinely lower model tier for a delegate.
 - `delegate_write_isolated` — isolated worktrees, branches, or sandboxes with a parent-controlled integration path.
+- `delegate_persistent` — a delegate that can be re-messaged with its prior context intact, whose reply the orchestrator can wait for and inspect.
 - `skill_discovery` and `skill_invoke` — discover and invoke an installed skill.
 - `diff_access` and `test_runner` — inspect changes and run relevant checks.
 - `human_confirmation` — obtain an explicit human decision before committing.
@@ -81,6 +82,7 @@ The interview only has value if its conclusions survive past the conversation. A
 - If the runtime exposes a writable native plan artifact, mirror the same contents there. Do not treat an undocumented implementation path as a portable default.
 - If the plan cannot be shared through either artifact, pass the complete plan text directly to each reviewer and delegate. If no writable artifact is available at all, ask the user for a path.
 - A user-specified location overrides these defaults.
+- When the build will use a manager loop, end the plan with a checklist grouped into ordered phases; that is the section the loop consumes.
 
 Write enough into it that an independent reviewer — human or AI, with no access to this conversation — could evaluate it cold: the problem being solved, the chosen approach and why (including alternatives that came up during grilling and why they were rejected), the concrete interface/behavior changes, and any open risks or assumptions still on the table. Update it inline as decisions resolve, the same discipline `grill-with-docs` uses for `CONTEXT.md` — capture as you go, don't batch.
 
@@ -117,6 +119,10 @@ Implement the reviewed plan test-first.
 If `skill_discovery` and `skill_invoke` are confirmed, look for a TDD skill and follow its actual loop. Otherwise, run the same discipline inline: **Red → Green → Refactor**, via vertical-slice tracer bullets (one test, one implementation, repeat — never all tests first, then all implementation). After the last Refactor step for a given slice, rerun the full test suite once more as an explicit final check. The `tdd` skill doesn't name this as a fourth phase and neither should you — treat it as the tail end of Refactor, not a separate ritual.
 
 For each behavior in the plan, write one failing test, write the minimal code to pass it, and once a slice's tests are all green, refactor — extract duplication, deepen modules, apply SOLID where it is natural — then rerun the whole suite. Writing a batch of tests before any implementation is horizontal slicing; it produces tests that check imagined shape instead of real behavior, and this workflow rejects it regardless of implementation mechanism.
+
+### Manager loop
+
+For a long plan with several ordered phases, use a manager loop when `delegate_persistent` is confirmed. The orchestrator acts as manager, sending one phase at a time to the same implementer, which maintains a checklist page and reports completed items, unresolved work, verification, and its diff. Read [references/manager-loop.md](references/manager-loop.md) before dispatching the first phase for the handoff template, progress page contract, and stall handling. Carry the TDD discipline into every phase message, and have the orchestrator verify each phase's diff and tests before sending the next.
 
 ### Fanning out the slices
 
