@@ -17,10 +17,12 @@ Run one phase at a time. While the loop is running, the manager does not edit co
 ## Send one phase
 
 Fill in this template for each phase. Paste its checklist items verbatim from the plan, including their verification criteria; select N explicitly (default 20 minutes).
+When filling in the template, replace `<absolute path to manager-loop.md>` with the absolute path to this document before dispatching it, so the implementer can read it.
 
 ```text
 Implement phase <phase ID> completely and extremely well, not perfectly.
 Read the full plan at <plan path> first. Work in <workspace>.
+Before creating or updating progress files, read and follow the "Checklist page contract" in <absolute path to manager-loop.md>.
 You own this phase's implementation; I am the manager and will verify it.
 
 Checklist for this phase (verbatim from the plan):
