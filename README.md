@@ -10,6 +10,14 @@ A collection of [Claude Code](https://claude.com/claude-code)/[codex](https://gi
 npx skills add koh11235813/skills
 ```
 
+### Optional companion skills
+
+`explore-grill-build` works on its own, but its interview and TDD phases are built around three separately installed skills: `grilling` (the interview), `domain-modeling` (glossary/ADR upkeep, only when the repo has or wants that structure), and `tdd` (the test loop). When one is missing the workflow says so once and falls back to an inline version. Recommended source is [mattpocock/skills](https://github.com/mattpocock/skills):
+
+```bash
+npx skills add mattpocock/skills --skill grilling domain-modeling tdd
+```
+
 ## Available skills
 
 - **explore-grill-build** — End-to-end workflow for implementing a nontrivial feature or fix, from first look to committed code. Explores the codebase, interviews to turn vague requirements into a written plan, gets that plan reviewed, implements it test-first, and gates on review before anything is committed.

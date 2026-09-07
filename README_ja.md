@@ -10,6 +10,14 @@
 npx skills add koh11235813/skills
 ```
 
+### 任意の併用スキル
+
+`explore-grill-build` は単体でも動くけど、インタビューと TDD のフェーズは別途インストールする3つのスキルを前提に設計されている。`grilling`（インタビュー本体）、`domain-modeling`（用語集と ADR の維持。リポジトリにその構造がある、または作りたい場合のみ）、`tdd`（テストループ）の3つ。無い場合はその旨を一度だけ伝えて、インライン版にフォールバックする。推奨の入手元は [mattpocock/skills](https://github.com/mattpocock/skills)：
+
+```bash
+npx skills add mattpocock/skills --skill grilling domain-modeling tdd
+```
+
 ## 収録されているスキル
 
 - **explore-grill-build** — 些細ではない機能追加・修正を、最初の調査からコミットまで一気通貫でやり切るワークフロー。コードベースを探索し、曖昧な要件をインタビュー形式で具体的なプランに落とし込み、そのプランをレビューし、テストファーストで実装し、コミット前に必ずレビューゲートを通す。
