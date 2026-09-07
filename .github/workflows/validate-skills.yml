@@ -1,0 +1,42 @@
+name: validate-skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontmatter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check SKILL.md frontmatter
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          found=0
+          for f in skills/*/SKILL.md; do
+            found=1
+            dir=$(basename "$(dirname "$f")")
+            if [ "$(sed -n '1p' "$f")" != "---" ]; then
+              echo "::error file=$f::first line must be '---'"; fail=1; continue
+            fi
+            end=$(awk 'NR>1 && /^---$/ {print NR; exit}' "$f")
+            if [ -z "$end" ]; then
+              echo "::error file=$f::frontmatter has no closing '---'"; fail=1; continue
+            fi
+            fm=$(sed -n "2,$((end-1))p" "$f")
+            name=$(printf '%s\n' "$fm" | sed -n 's/^name:[[:space:]]*//p' | head -1)
+            desc=$(printf '%s\n' "$fm" | sed -n 's/^description:[[:space:]]*//p' | head -1)
+            if [ "$name" != "$dir" ]; then
+              echo "::error file=$f::name '$name' does not match directory '$dir'"; fail=1
+            fi
+            if [ -z "$desc" ]; then
+              echo "::error file=$f::description is empty or missing"; fail=1
+            fi
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "::error::no skills/*/SKILL.md found"; fail=1
+          fi
+          exit "$fail"
