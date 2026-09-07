@@ -52,27 +52,39 @@ Scale the number of parallel explorers to how uncertain the scope is, not by hab
 
 Don't exceed 3 — beyond that you're paying for parallel context you won't be able to synthesize usefully.
 
-Once the explorers return, synthesize their findings into a short brief: what exists, what pattern to follow, what's surprising. Carry this brief into Phase 1 as-is — the interview should build on what you just learned, not re-discover it from zero. `grill-me` and `grill-with-docs` will still explore further themselves as specific questions demand it during the interview (that's expected and fine — this phase gives them a head start on the broad picture, not a replacement for depth on a specific branch).
+Once the explorers return, synthesize their findings into a short brief: what exists, what pattern to follow, what's surprising. Carry this brief into Phase 1 as-is — the interview should build on what you just learned, not re-discover it from zero. `grilling` (and `domain-modeling`, when it runs) will still explore further as specific questions demand it during the interview (that's expected and fine — this phase gives them a head start on the broad picture, not a replacement for depth on a specific branch).
 
 ## Phase 1 — Grill
 
 Use the Phase 0 brief plus a grilling-style interview to turn "what the user said they want" into a concrete, resolved implementation plan.
 
-### Choosing which grilling skill to run
+### Companion skills
 
-Two skills do this: `grill-me` (pure interview, no file output) and `grill-with-docs` (the same interview, plus challenging terminology against the repo's existing domain model and updating `CONTEXT.md`/`docs/adr/` inline). Pick based on the target repo's actual documentation state — don't ask the user which one to use, and don't guess from vibes.
+This phase is designed around two optional companion skills, and Phase 3 around a third. All three are separately installed; `mattpocock/skills` is the recommended source, and the one-line install is in [references/companion-skills.md](references/companion-skills.md).
 
-1. **Structural check.** Does `CONTEXT.md` exist at the repo root? Does `CONTEXT-MAP.md` exist at the root (multi-context repo)? Does `docs/adr/` exist and contain at least one `.md` file? If any of these are true, the repo already has — or has already started — the documentation structure `grill-with-docs` maintains. Use it.
+- `grilling` — the interview itself. Always the first choice when it is present.
+- `domain-modeling` — run alongside `grilling` only when the domain-docs decision below says so. It challenges terminology against the repo's existing domain model and updates `CONTEXT.md`/`docs/adr/` inline.
+- `tdd` — Phase 3's loop reference (see there).
+
+Resolve availability for each skill independently, and only through the runtime's confirmed skill mechanism (`skill_discovery` plus `skill_invoke`; the concrete calls live in the harness adapters, not here). Distinguish three states: **present** — use it; **missing** — the one-time suggestion below, then the inline fallback; **present but not invocable, or discovery unverified** — the inline fallback, with no install suggestion, because installing more skills won't change that. Never rely on wrapper skills such as `grill-me` or `grill-with-docs`: upstream they are one-line shims around `grilling` and `domain-modeling` and are flagged so that the model cannot invoke them, so they never appear in a model-visible listing even when installed.
+
+**One-time install suggestion.** The first time any of the three is found missing in a session, tell the user once — in one or two sentences — that this workflow has optional companion skills and give the exact command from the reference above. Do not run it yourself, do not wait for it, and do not repeat the suggestion in later phases; carry on with the inline fallback. If a skill under a different name covers the same job (for example a harness-native TDD skill), that counts as present — don't suggest an install just because the literal name is absent.
+
+### Deciding whether domain modeling runs
+
+Pick based on the target repo's actual documentation state — don't ask the user which mode to use up front, and don't guess from vibes.
+
+1. **Structural check.** Does `CONTEXT.md` exist at the repo root? Does `CONTEXT-MAP.md` exist at the root (multi-context repo)? Does `docs/adr/` exist and contain at least one `.md` file? If any of these are true, the repo already has — or has already started — the documentation structure `domain-modeling` maintains. Run it alongside the interview.
 
 2. **If the structural check is empty, ask — once, with a recommendation.** Don't guess whether this repo "should" have that documentation structure; that judgment is easy to get wrong in both directions (imposing docs on a repo that's deliberately kept lean, or skipping them on a repo that would clearly benefit). Ask directly: "This repo doesn't have CONTEXT.md/ADRs yet — want me to start that structure as part of this session, or keep this to a plain interview? I'd lean toward [X] because [reason]." Then proceed with whichever the user picks.
 
-3. **Confirm it is installed and invocable, then invoke it.** Use the runtime's skill-discovery and invocation surfaces only when both `skill_discovery` and `skill_invoke` are confirmed. If the selected skill is not available, do not guess an invocation syntax; fall through to the inline interview.
+3. **Load what you selected.** `grilling` alone, or `grilling` and `domain-modeling` together, each through the runtime's confirmed mechanism. Whatever the companions instruct, this workflow's capability gates still apply while they run: `grilling` will want to delegate fact-finding to a subagent whenever a question turns on something in the environment — do that only through a confirmed, eligible delegate, and otherwise go look yourself. The underlying rule is the one to keep: a factual question gets researched, not handed to the user.
 
-### Fallback chain if neither is installed
+### Inline fallbacks
 
-If neither `grill-me` nor `grill-with-docs` appears in the available-skills listing, check — with low expectations — for a skill or command literally named `grilling`. It's an older name from a different skills collection (`mattpocock/skills`) and may or may not exist in whatever environment is running this workflow; this is a soft, low-emphasis fallback line, not a documented feature of this skill. If it's there, use it the same way. If it's not, don't dwell on it.
+**Interview without `grilling`.** Work the design as a tree of decisions in rounds. Each round asks every question whose prerequisites are already settled — the ones you can ask now without guessing at answers you haven't heard — numbered, each with 2-4 concrete options plus an implicit "or something else," and each with your own recommended answer stated up front. Never put a question in the same round as the unresolved decision it depends on; that produces speculative answers and rework. Wait for the user's answers, recompute the frontier, ask the next round. If the runtime or the user limits how many questions fit at once, split a round rather than drop the recommendations. Stop when you can state the plan back and the user agrees it's what they meant.
 
-If nothing in that chain is available, conduct the interview yourself, directly: ask one question at a time, each with 2-4 concrete options plus an implicit "or something else," and always state your own recommended answer before waiting on the user's. This preserves the discipline that makes grilling effective — one question at a time, a recommendation offered every time — even without the packaged skill doing it for you.
+**Domain modeling without `domain-modeling`.** When the decision above selected it but the skill is unavailable: read the existing `CONTEXT.md` (or `CONTEXT-MAP.md` and the relevant context's file) before the interview; challenge any term the user or the code uses inconsistently with it as the term comes up; record each resolved term in the glossary the moment it settles; and offer an ADR under `docs/adr/` only for a consequential trade-off, not for every choice. Keep glossary content out of the implementation plan and vice versa — the plan cites terms, it doesn't define them.
 
 ### Writing the plan down
 
@@ -84,7 +96,7 @@ The interview only has value if its conclusions survive past the conversation. A
 - A user-specified location overrides these defaults.
 - When the build will use a manager loop, end the plan with a checklist grouped into ordered phases; that is the section the loop consumes.
 
-Write enough into it that an independent reviewer — human or AI, with no access to this conversation — could evaluate it cold: the problem being solved, the chosen approach and why (including alternatives that came up during grilling and why they were rejected), the concrete interface/behavior changes, and any open risks or assumptions still on the table. Update it inline as decisions resolve, the same discipline `grill-with-docs` uses for `CONTEXT.md` — capture as you go, don't batch.
+Write enough into it that an independent reviewer — human or AI, with no access to this conversation — could evaluate it cold: the problem being solved, the chosen approach and why (including alternatives that came up during grilling and why they were rejected), the concrete interface/behavior changes, and any open risks or assumptions still on the table. Update it inline as decisions resolve, the same discipline `domain-modeling` uses for `CONTEXT.md` — capture as you go, don't batch.
 
 ## Phase 2 — External plan review
 
@@ -116,7 +128,11 @@ Implement the reviewed plan test-first.
 
 ### Which loop
 
-If `skill_discovery` and `skill_invoke` are confirmed, look for a TDD skill and follow its actual loop. Otherwise, run the same discipline inline: **Red → Green → Refactor**, via vertical-slice tracer bullets (one test, one implementation, repeat — never all tests first, then all implementation). After the last Refactor step for a given slice, rerun the full test suite once more as an explicit final check. The `tdd` skill doesn't name this as a fourth phase and neither should you — treat it as the tail end of Refactor, not a separate ritual.
+If `skill_discovery` and `skill_invoke` are confirmed, look for a TDD skill — `tdd` from the companion set, or a harness-native equivalent under another name — and load it. If none is present, the one-time install suggestion from Phase 1 applies (once per session, not once per phase); either way, run the discipline below.
+
+**Red → Green → Refactor**, via vertical-slice tracer bullets (one test, one implementation, repeat — never all tests first, then all implementation). After the last Refactor step for a given slice, rerun the full test suite once more as an explicit final check — treat it as the tail end of Refactor, not a separate ritual.
+
+Where a loaded TDD skill and this workflow disagree, this workflow's loop governs and the skill supplies the test-quality guidance. Concretely: upstream `tdd` places refactoring in the review stage rather than in the loop; here it stays per slice, because Phase 4's external review must see a diff that is already clean. Take from the skill what it is good at — what a test worth keeping looks like, where the seam is that the test observes behavior through, what not to mock. Settle the seams in the Phase 1 plan so the loop doesn't stall on interface shape; if a slice still turns up an unresolved interface, resolve it in the plan document before writing that slice's test rather than following the skill into a further design skill.
 
 For each behavior in the plan, write one failing test, write the minimal code to pass it, and once a slice's tests are all green, refactor — extract duplication, deepen modules, apply SOLID where it is natural — then rerun the whole suite. Writing a batch of tests before any implementation is horizontal slicing; it produces tests that check imagined shape instead of real behavior, and this workflow rejects it regardless of implementation mechanism.
 
@@ -173,6 +189,7 @@ A few things hold across every phase above, worth stating once instead of five t
 - **External findings are never auto-applied** (except the explicit Phase 4.1 self-review carve-out). Whether it's the Phase 2 plan review or the Phase 4 external diff review, an outside agent's output is input to a decision someone makes explicitly — never a patch applied silently.
 - **The plan document is the source of truth, not the conversation.** Every phase after Phase 1 reads the plan, not chat history. Keep it current.
 - **Delegation doesn't remove verification.** Whatever tier of subagent did the work, the orchestrator checks it before moving on.
+- **Capability gates outlive the phase that ran them.** A companion skill loaded mid-workflow inherits this session's confirmed/unavailable marks; its own instructions to delegate, spawn, or invoke don't re-open a gate that was closed in the runtime check.
 - **Scale effort to the task.** See Scope, above — this doesn't stop mattering once you're mid-flow.
 
 Use a runtime adapter only when one exists and its described capabilities are confirmed in the current session. See `references/harness-adapters/` — `claude-code.md`, `codex.md`, `opencode.md`, and `hermes-agent.md`. Record the evidence required before adding or changing an adapter in `references/harness-adapters/README.md`; an adapter is a mapping, not a fallback specification.
