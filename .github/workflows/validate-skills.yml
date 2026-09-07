@@ -14,6 +14,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          shopt -s nullglob
           fail=0
           found=0
           for f in skills/*/SKILL.md; do

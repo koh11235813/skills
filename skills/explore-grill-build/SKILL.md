@@ -18,7 +18,7 @@ This is a five-phase gauntlet. It's worth it for a feature with real design spac
 | Phase | Does | Produces |
 |---|---|---|
 | 0 — Explore | Capability-gated discovery delegates survey the relevant codebase | A synthesized brief |
-| 1 — Grill | Auto-selected interview turns the brief + user intent into a concrete plan | A written plan document |
+| 1 — Grill | Grilling interview, with domain modeling auto-selected from the repo's docs state, turns the brief + user intent into a concrete plan | A written plan document |
 | 2 — External plan review | An eligible strong reviewer, plus a weak-model probe when selectable, review the plan | Plan updated in place, go/no-go to build |
 | 3 — TDD build | Red → Green → Refactor via tracer-bullet slices, with capability-gated slice fan-out or a manager loop | Working, tested implementation |
 | 4 — Review gate | Self-review → external diff review → explicit human go-ahead | Commit, or not |
