@@ -18,9 +18,26 @@ npx skills add koh11235813/skills
 npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 ```
 
+### 外部依存
+
+ここのスキルはほとんどが markdown だけで完結する。例外は `jev-recommendation-rate` で、シェルスクリプトから [TypeSafe](https://typesafe.ai) の API を叩くので、`curl` と `jq`、それに環境変数 `JEV_API_KEY` が要る。
+
+`jq` は多くの Linux ディストリの標準構成には入っていない（最近の macOS には同梱されている）:
+
+```bash
+brew install jq        # macOS で入っていなければ
+sudo apt install jq    # Debian/Ubuntu
+sudo dnf install jq    # Fedora
+export JEV_API_KEY=... # キーは https://typesafe.ai で取得
+```
+
+どれかが欠けている場合、`jev-recommendation-rate` はその旨を伝えて、推奨率なしのまま質問を出す。このリポジトリの他のスキルには影響しない。
+
 ## 収録されているスキル
 
 - **explore-grill-build**: 些細ではない機能追加・修正を、最初の調査からコミットまで一気通貫でやり切るワークフロー。コードベースを探索し、曖昧な要件をインタビュー形式で具体的なプランに落とし込み、そのプランをレビューし、テストファーストで実装し、コミット前に必ずレビューゲートを通す。
+
+- **jev-recommendation-rate**: 選択式の質問の各選択肢に、TypeSafe の Jev モデルが算出した推奨率を付ける。どれを選んだかだけでなく、確率がどう割れているかが読み手に見えるようになる。対象は `AskUserQuestion` の呼び出しと、`grilling` / `explore-grill-build` の grill ラウンド。同梱の `score-options.sh` は、キャッシュした前提要約に対して1ラウンド分を1リクエストで採点し、消費トークンも報告する。`curl`、`jq`、`JEV_API_KEY` が必要。
 
 - **codex-harness-behavior**: codex (codex-rs) エージェントハーネスがエージェントの行動を制約、制御、修正する方法の運用モデル。
 
