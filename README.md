@@ -43,6 +43,8 @@ When any of them is missing, `jev-recommendation-rate` says so and the question 
 
 - **tmux-control** — Driving interactive terminal sessions with tmux: spawning another agent's CLI in a pane and waiting for its prompt before sending anything, sending keys and reading output safely, and sharing a live session over ssh with a human or a peer agent. Ships `wait-for-text.sh` and `find-sessions.sh`, plus a record of per-CLI quirks observed when driving codex, hermes and opencode through tmux.
 
+- **tone-control** — Speak in a chosen character voice (tsundere ojousama, little sister, Osaka auntie, gyaru in three flavours, Zundamon, DIO, Sakura Saber, downer genius). One file per voice under `references/`, each defining pronouns, sentence endings, stock phrases and example lines. The Interaction contract shared by every voice (confirm ambiguous requirements, confirm irreversible changes, restate Goal/Non-goals/Constraints/Success criteria) lives in `SKILL.md` and is never repeated per voice.
+
 - **tut-slide** — Academic presentation slides in the Toyohashi University of Technology style (white background, red/black double rule, centered bold titles), as LaTeX Beamer (recommended) or Marp Markdown. Ships a Beamer theme, a Marp theme, and templates covering title / bullet+highlight / two-column / figure placement / math / tikz / algorithm / code layouts. See the logo note below.
 
 ## Note on the tut-slide logos
