@@ -1,18 +1,21 @@
 # Companion skills
 
-`explore-grill-build` runs on its own. Three separately installed skills make Phase 1 and Phase 3 sharper when they are present; when they are not, the workflow falls back to the inline versions described in `SKILL.md` and keeps going.
+`explore-grill-build` runs on its own. Separately installed skills make Phase 1 and Phase 3 sharper when they are present; when they are not, the workflow falls back to the inline versions described in `SKILL.md` and keeps going.
 
 | Skill | Used in | When absent |
 |---|---|---|
 | `grilling` | Phase 1, always | Inline interview in dependency-aware rounds |
 | `domain-modeling` | Phase 1, only when the domain-docs decision selects it | Inline glossary/ADR discipline |
 | `tdd` | Phase 3 | Inline Red → Green → Refactor loop |
+| `jev-recommendation-rate` | Phase 1, optional | Rounds go out with your recommendation but no per-option percentages |
 
 Recommended source is [`mattpocock/skills`](https://github.com/mattpocock/skills). One command installs all three:
 
 ```bash
 npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 ```
+
+`jev-recommendation-rate` attaches a recommendation rate to each option of a grill-round question. It needs `JEV_API_KEY`, `curl` and `jq`; when any of them is missing its own script exits with a message and the round goes out unscored. It ships in this repository, so `npx skills add koh11235813/skills` already installs it.
 
 A skill under another name that does the same job (for example a harness-native TDD skill) counts as present; do not suggest this install just because the literal name is missing.
 

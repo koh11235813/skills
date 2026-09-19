@@ -18,9 +18,26 @@ npx skills add koh11235813/skills
 npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 ```
 
+### External dependencies
+
+Most skills here are markdown only. `jev-recommendation-rate` is the exception: it calls the [TypeSafe](https://typesafe.ai) API from a shell script, so it needs `curl`, `jq`, and a `JEV_API_KEY` in the environment.
+
+`jq` is not part of a base install on most Linux distributions (recent macOS ships it):
+
+```bash
+brew install jq        # macOS, if missing
+sudo apt install jq    # Debian/Ubuntu
+sudo dnf install jq    # Fedora
+export JEV_API_KEY=... # key from https://typesafe.ai
+```
+
+When any of them is missing, `jev-recommendation-rate` says so and the question goes out without recommendation rates. Every other skill in this repository is unaffected.
+
 ## Available skills
 
 - **explore-grill-build** — End-to-end workflow for implementing a nontrivial feature or fix, from first look to committed code. Explores the codebase, interviews to turn vague requirements into a written plan, gets that plan reviewed, implements it test-first, and gates on review before anything is committed.
+
+- **jev-recommendation-rate** — Attaches a recommendation rate to every option of a multiple-choice question, computed by TypeSafe's Jev model, so a question shows how the probability mass splits across its options rather than only which one was picked. Applies to `AskUserQuestion` calls and to grill rounds from `grilling`/`explore-grill-build`. Ships `score-options.sh`, which scores a whole round in one request against a cached context brief and reports its token cost. Requires `curl`, `jq` and `JEV_API_KEY`.
 
 - **codex-harness-behavior** - Operational model of how the codex (codex-rs) agent harness constrains, gates, and corrects agent behavior
 
