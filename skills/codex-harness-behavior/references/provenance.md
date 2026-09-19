@@ -200,6 +200,8 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Four auth requirement fields are stripped from backend-delivered layers, and a disallowed stored credential is filtered to `None` rather than reported | mechanism Layer 0 | `config/src/requirements_layers/layer.rs:11-17,91-96`; `login/src/auth/manager.rs:1141-1152,1181` | `LOCAL_ONLY_AUTH_REQUIREMENTS` |
 | Web search mode defaults to `Cached`, which grants the same external access as `Disabled` (`external_web_access: false`) while still registering the tool, where `Disabled` returns no tool spec at all | SKILL outside playbook | `core/src/config/mod.rs:2595-2606,3650`; `core/src/tools/hosted_spec.rs:16`; `ext/web-search/src/extension.rs:86-92` | `external_web_access_for_mode` |
 | …and an unsupported preference walks a fallback list rather than erroring | SKILL outside playbook | `core/src/config/mod.rs:2976-3020` | `resolve_web_search_mode_for_turn` |
+| …the four modes are `Disabled`, `Cached`, `Indexed`, `Live`, `Cached` is the `#[default]`, and `restrict_to` intersects two modes by taking the more restrictive | SKILL outside playbook | `protocol/src/config_types.rs:376-394`; `core/tests/suite/web_search.rs:33` | `enum WebSearchMode`; `fn restrict_to`; `web_search_mode_cached_sets_external_web_access_false` |
+| …and the registered tool name is `web__run` | SKILL outside playbook | observed in the 2026-09-20 code-mode tool inventory; see the empirical section | `web__run` |
 | `web.run` auto-ships a two-user-message tail with a 1,000-token assistant budget | mechanism §2 | `ext/web-search/src/history.rs:10,18-26`; `core/src/tools/spec_plan.rs:936-945` | `ASSISTANT_CONTEXT_TOKEN_LIMIT` |
 
 ## Results on the way back
@@ -440,6 +442,8 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | `is_non_root_agent` covers internal sessions as well as subagents, so both are excluded from the async user tools | SKILL default surface | `protocol/src/protocol.rs:2723-2728`; `core/src/tools/spec_plan.rs:1162,1187` | `fn is_non_root_agent` |
 | A child's service tier is overwritten with the root thread's after the role is applied, so a role's `service_tier` is never effective | SKILL default surface, mechanism §6 | `core/src/tools/handlers/multi_agents_common.rs:322-350`; `core/src/tools/handlers/multi_agents/spawn.rs:106-108`; `core/src/tools/handlers/multi_agents_v2/spawn.rs:136-145` | `fn apply_spawn_agent_service_tier` |
 | …and a child model that does not support the root's tier receives none | mechanism §6 | `core/src/tools/handlers/multi_agents_common.rs:344-348` | `supports_service_tier` |
+| V1's tools register under a `multi_agent_v1` namespace rather than as bare names | SKILL default surface | `core/src/tools/handlers/multi_agents_spec.rs:14,82,171`; `core/src/tools/registry.rs:836`; `core/src/tools/spec_plan.rs:667` | `MULTI_AGENT_V1_NAMESPACE` |
+| A V1 full-history fork fixes the child's role: `fork_context` together with `agent_type` is refused | SKILL default surface | `core/src/agent/child_config.rs:162`; pinned by `core/src/tools/handlers/multi_agents_tests.rs:375` | `Full-history forked agents inherit the parent agent type` |
 
 ---
 
