@@ -24,6 +24,8 @@ npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 
 - **codex-harness-behavior** - Operational model of how the codex (codex-rs) agent harness constrains, gates, and corrects agent behavior
 
+- **tmux-control** — Driving interactive terminal sessions with tmux: spawning another agent's CLI in a pane and waiting for its prompt before sending anything, sending keys and reading output safely, and sharing a live session over ssh with a human or a peer agent. Ships `wait-for-text.sh` and `find-sessions.sh`, plus a record of per-CLI quirks observed when driving codex, hermes and opencode through tmux.
+
 - **tut-slide** — Academic presentation slides in the Toyohashi University of Technology style (white background, red/black double rule, centered bold titles), as LaTeX Beamer (recommended) or Marp Markdown. Ships a Beamer theme, a Marp theme, and templates covering title / bullet+highlight / two-column / figure placement / math / tikz / algorithm / code layouts. See the logo note below.
 
 ## Note on the tut-slide logos
