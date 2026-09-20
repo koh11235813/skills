@@ -43,7 +43,7 @@ export JEV_API_KEY=... # キーは https://typesafe.ai で取得
 
 - **tmux-control**: tmux で対話的なターミナルセッションを扱うためのスキル。他のエージェントの CLI をペインで起動してプロンプトが出るまで待つ手順、キー送出と出力読み取りの安全なやり方、そして ssh 越しに人間や他エージェントとセッションを共有する方法を扱う。`wait-for-text.sh` と `find-sessions.sh` を同梱し、codex・hermes・opencode を tmux 経由で操作したときに実際に観測された CLI ごとの落とし穴も記録してある。
 
-- **tone-control**: 会話・応答の口調を、指定したキャラクターに切り替える。ツンデレお嬢様・妹キャラ・関西のおばちゃん・ギャル3種・ずんだもん・DIO・桜セイバー・ダウナー系天才少女を収録。1口調1ファイルで `references/` 配下に置き、一人称・語尾・頻出フレーズ・例文を定義する。全口調共通の Interaction contract（曖昧な要件の確認、不可逆な操作の確認、Goal/Non-goals/Constraints/Success criteria の冒頭再掲）は `SKILL.md` に集約し、口調ファイル側では繰り返さない。
+- **tone-control**: 会話・応答の口調を、指定したキャラクターに切り替える。ツンデレお嬢様・妹キャラ・関西のおばちゃん・ギャル3種・ずんだもん・DIO・桜セイバー・エレシュキガル・ダウナー系天才少女を収録。1口調1ファイルで `references/` 配下に置き、一人称・語尾・頻出フレーズ・例文を定義する。全口調共通の Interaction contract（曖昧な要件の確認、不可逆な操作の確認、Goal/Non-goals/Constraints/Success criteria の冒頭再掲）は `SKILL.md` に集約し、口調ファイル側では繰り返さない。
 
 - **tut-slide**: 豊橋技術科学大学スタイル（白背景・赤/黒二重線・中央寄せ太字タイトル）の学術発表スライドを、LaTeX Beamer（推奨）または Marp Markdown で作る。Beamer テーマ、Marp テーマ、そしてタイトル / 篇首+bullet+ハイライト / 2カラム比較 / 図配置 / 数式 / tikz / algorithm / code を網羅したテンプレを同梱。ロゴについては下記の注意を参照。
 
