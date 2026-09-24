@@ -9,7 +9,7 @@ Every action an agent takes under codex is mediated: what it reads is composed b
 
 This file is the operational layer — what is true, how to tell which state you are in, and what to do when something fails. The full mechanism (how each layer is built, the complete rejection-string table, the byte-level details) lives in `references/mechanism.md`. The evidence behind every claim — source file, line, and the keyword to re-grep — lives in `references/provenance.md`.
 
-Verified against codex-rs `main` at commit `a5290028a2`, 2026-09-19, and probed against `codex-cli 0.155.0-alpha.2.3`. That branch moves at roughly 50 commits/day, so treat exact strings as keywords to match on, never as a stable API.
+Verified against codex-rs `main` at commit `421082e79d`, 2026-09-24, and probed against `codex-cli 0.155.0-alpha.2.3`. That branch moves at roughly 50 commits/day, so treat exact strings as keywords to match on, never as a stable API.
 
 ## Mental model
 

@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `a5290028a2`, 2026-09-19. Probed against `codex-cli 0.155.0-alpha.2.3`; the binary and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `421082e79d`, 2026-09-24. Probed against `codex-cli 0.155.0-alpha.2.3`; the binary and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
@@ -541,22 +541,19 @@ This is a harness introspection probe. Report the exact names of every tool avai
 
    ```
    git log --oneline <pinned>..HEAD -- \
-     codex-rs/agent-roles codex-rs/app-server codex-rs/app-server-protocol codex-rs/apply-patch codex-rs/cli \
-     codex-rs/cloud-config codex-rs/code-mode codex-rs/code-mode-protocol \
-     codex-rs/code-mode-runtime codex-rs/codex-api codex-rs/codex-mcp \
-     codex-rs/config codex-rs/connectors codex-rs/context-fragments codex-rs/core \
-     codex-rs/core-plugins codex-rs/exec codex-rs/exec-server \
-     codex-rs/execpolicy codex-rs/ext codex-rs/features codex-rs/git-utils codex-rs/guardian-context codex-rs/history codex-rs/hooks \
-     codex-rs/linux-sandbox codex-rs/login codex-rs/memories \
-     codex-rs/model-provider codex-rs/model-provider-info \
-     codex-rs/models-manager codex-rs/network-proxy \
-     codex-rs/plugin codex-rs/process-hardening codex-rs/prompts codex-rs/protocol \
-     codex-rs/rmcp-client codex-rs/sandboxing codex-rs/secrets codex-rs/shell-command codex-rs/shell-escalation \
-     codex-rs/skills codex-rs/state codex-rs/tools codex-rs/tui codex-rs/utils \
-     codex-rs/windows-sandbox-rs codex-rs/windows-sandbox-service codex-rs/worktree
+     codex-rs/app-server codex-rs/app-server-protocol codex-rs/apply-patch codex-rs/cli codex-rs/cloud-config \
+     codex-rs/code-mode codex-rs/code-mode-protocol codex-rs/code-mode-runtime codex-rs/codex-api \
+     codex-rs/codex-mcp codex-rs/config codex-rs/connectors codex-rs/context-fragments codex-rs/core \
+     codex-rs/core-plugins codex-rs/exec codex-rs/exec-server codex-rs/execpolicy codex-rs/ext \
+     codex-rs/features codex-rs/git-utils codex-rs/guardian-context codex-rs/history codex-rs/hooks \
+     codex-rs/linux-sandbox codex-rs/login codex-rs/memories codex-rs/model-provider \
+     codex-rs/model-provider-info codex-rs/models-manager codex-rs/network-proxy codex-rs/plugin \
+     codex-rs/process-hardening codex-rs/prompts codex-rs/protocol codex-rs/rmcp-client codex-rs/sandboxing \
+     codex-rs/secrets codex-rs/shell-command codex-rs/shell-escalation codex-rs/skills codex-rs/state \
+     codex-rs/tools codex-rs/tui codex-rs/utils codex-rs/windows-sandbox-rs codex-rs/worktree
    ```
 
-   Regenerate this list from the **Source** column whenever rows are added, rather than editing it by hand. `codex-rs/mcp-server` was dropped at the 2026-09-19 re-pin because the crate no longer exists; a pathspec naming a directory gone from the working tree still matches its history, so a stale entry fails silently rather than loudly.
+   Regenerate this list from the **Source** column whenever rows are added, rather than editing it by hand. `codex-rs/mcp-server` was dropped at the 2026-09-19 re-pin because the crate no longer exists, and `codex-rs/agent-roles` and `codex-rs/windows-sandbox-service` at the 2026-09-24 re-pin because no row cites them any more; a pathspec naming a directory gone from the working tree still matches its history, so a stale entry fails silently rather than loudly.
 
 2. **Check the anchors.** For each row, `rg` the **match on** column. A hit means the claim's anchor survives; follow it to confirm the surrounding logic still says the same thing. A miss means the constant or string was renamed or removed — re-derive the claim before editing the prose, and do not assume the behavior changed just because the identifier did.
 
