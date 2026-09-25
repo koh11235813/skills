@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `421082e79d`, 2026-09-24. Prompt composition probed against `codex-cli 0.158.0-alpha.8` (main `53446f90a5`, 17 commits before the pin); exec behavior still from `0.155.0-alpha.2.3`. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `8ae55c863d`, 2026-09-25. Prompt composition probed against `codex-cli 0.158.0-alpha.8` (main `53446f90a5`, 80 commits before the pin); exec behavior still from `0.155.0-alpha.2.3`. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
@@ -216,7 +216,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | …and an unsupported preference walks a fallback list rather than erroring | SKILL outside playbook | `core/src/config/mod.rs` | `resolve_web_search_mode_for_turn` |
 | …the four modes are `Disabled`, `Cached`, `Indexed`, `Live`, `Cached` is the `#[default]`, and `restrict_to` intersects two modes by taking the more restrictive | SKILL outside playbook | `protocol/src/config_types.rs`; `core/tests/suite/web_search.rs` | `enum WebSearchMode`; `fn restrict_to`; `web_search_mode_cached_sets_external_web_access_false` |
 | …and the registered tool name is `web__run` | SKILL outside playbook | observed in the 2026-09-20 code-mode tool inventory; see the empirical section | `web__run` |
-| `web.run` auto-ships a two-user-message tail with a 1,000-token assistant budget | mechanism §2 | `ext/web-search/src/history.rs`; `core/src/tools/spec_plan.rs` | `const ASSISTANT_CONTEXT_TOKEN_LIMIT`; `ASSISTANT_CONTEXT_TOKEN_LIMIT` |
+| `web.run` auto-ships a two-user-message tail with a 1,000-token assistant budget | mechanism §2 | `ext/web-search/src/history.rs` | `const ASSISTANT_CONTEXT_TOKEN_LIMIT`; `retain_tail_from_last_n_user_messages` |
 
 ## Results on the way back
 
