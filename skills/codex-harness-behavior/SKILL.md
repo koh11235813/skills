@@ -9,7 +9,7 @@ Every action an agent takes under codex is mediated: what it reads is composed b
 
 This file is the operational layer — what is true, how to tell which state you are in, and what to do when something fails. The full mechanism (how each layer is built, the complete rejection-string table, the byte-level details) lives in `references/mechanism.md`. The evidence behind every claim — source file and the keyword to re-grep — lives in `references/provenance.md`.
 
-Verified against codex-rs `main` at commit `55543d8772`, 2026-09-25. Prompt composition was probed against `codex-cli 0.158.0-alpha.8`, 101 commits older; exec behavior against `0.155.0-alpha.2.3`. That branch moves at roughly 50 commits/day, so treat exact strings as keywords to match on, never as a stable API.
+Verified against codex-rs `main` at commit `b334d5b3f2`, 2026-09-26. Prompt composition was probed against `codex-cli 0.158.0-alpha.8`, 136 commits older; exec behavior against `0.155.0-alpha.2.3`. That branch moves at roughly 50 commits/day, so treat exact strings as keywords to match on, never as a stable API.
 
 ## Mental model
 
@@ -72,7 +72,7 @@ A first-pass model, not a complete state machine — individual tools and manage
 
 `untrusted` (unless-trusted) is retired from the CLI and from public config: `approval_policy = "untrusted"` in `config.toml`, a profile, or a `-c` override now fails config load with `approval_policy = "untrusted" is no longer supported; remove this setting`. It survives as internal state you can land in rather than a value you pick — a project whose trust record marks it untrusted gets it as the default policy — and as an experimental app-server override, since `thread/start`'s `approval_policy` is applied as a config *override* and never hits that check. In it, every command no exec-policy rule explicitly allows prompts — and it opts into no-sandbox approval for *every* tool (`on-request` opts in only for apply_patch, `granular` only when its `sandbox_approval` flag is on), so when the filesystem policy carries no denied-read restrictions a classified sandbox denial can earn one approval-gated retry outside the filesystem sandbox. Denied-read policies keep every attempt sandboxed.
 
-Sandbox mode sets the jail independently: `read-only`, `workspace-write` (cwd + declared roots + tmp; `.git`/`.agents`/`.codex` still protected; network restricted), `danger-full-access`, or external (the environment is the jail).
+Sandbox mode sets the jail independently: `read-only`, `workspace-write` (cwd + declared roots + tmp; `.git`/`.agents`/`.codex`/`.aws` still protected; network restricted), `danger-full-access`, or external (the environment is the jail).
 
 **Windows is the exception worth knowing.** The Windows sandbox backend ships disabled. In that state the harness does not refuse to run — it **downgrades** the effective profile from workspace-write to read-only and, under that downgraded profile, pushes every command that no exec-policy rule matched to prompt — or to outright rejection under `never`. The carve-out that used to let known-safe inspection commands run unjailed is gone; an explicit exec-policy allow still bypasses the sandbox. Do not assume a Windows workspace-write session is enforcing anything at the kernel level.
 
