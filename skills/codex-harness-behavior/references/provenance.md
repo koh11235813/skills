@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `4fd5745e84`, 2026-09-28. Prompt composition probed against `codex-cli 0.158.0-alpha.8` (main `53446f90a5`, 194 commits before the pin); exec behavior still from `0.155.0-alpha.2.3`. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `4fd5745e84`, 2026-09-28. Prompt composition probed against `codex-cli 0.158.0-alpha.8` (main `53446f90a5`, 194 commits before the pin); exec behavior still from `0.155.0-alpha.2.3`; `instant_interrupt` steering from `codex-cli 0.160.0-alpha.2` (main `6288753b46` plus a release commit, 10 commits after the pin). The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
@@ -505,7 +505,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 
 ## Empirically verified
 
-Two probe families, run at different times against different builds. Do not read a row as re-verified unless its own family was — the tables are split for exactly that reason. Raw dumps and probe transcripts are not checked in.
+Three probe families, run at different times against different builds. Do not read a row as re-verified unless its own family was — the tables are split for exactly that reason. Raw dumps and probe transcripts are not checked in.
 
 ### Prompt composition — re-run 2026-09-25, `codex-cli 0.158.0-alpha.8`
 
@@ -567,6 +567,20 @@ This is a harness introspection probe. Report the exact names of every tool avai
 ```
 
 **A probe model cannot be trusted to quote an error string.** Both probe sessions independently reported the policy rejection as `` exec_command failed for `/bin/zsh -c '…'`: CreateProcess { … } `` — the shape this document itself claimed at the previous pin. That string does not exist: the only site that builds this message is `format!("exec_command failed: {err:?}")`, the fragment `exec_command failed for` appears nowhere in the tree, and the probe binary's own strings contain the new form and not the old one. The model reproduced a documented-looking shape rather than the bytes it received, which means a probe can silently confirm whatever the docs already say. Take verbatim strings from source; use probes only for structure that source cannot show — which tools are exposed, whether a denial arrives wrapped or bare, whether an uncaught rejection ends the script, whether output was truncated at all. **The 2026-09-20 re-run closes this hole a second way**: its strings come from the rollout's `custom_tool_call_output` bytes rather than from anything the model wrote, and read that way the wrapper matched source exactly. Parse the rollout, never the transcript.
+
+### `instant_interrupt` steering — run 2026-09-29, `codex-cli 0.160.0-alpha.2`
+
+Driven over stdio against `codex app-server -c features.instant_interrupt=<bool>` under ChatGPT auth, on the WebSocket transport (one connect per run, no HTTP fallback), with `approvalPolicy: "never"` and `sandbox: "read-only"`. Each run started a turn asking the model to count from 1 to 400 without tools, sent `turn/steer` with `Stop counting and just say DONE.` after about fifteen `item/agentMessage/delta` notifications, and waited for `turn/completed`. Request bodies were read from a `CODEX_ROLLOUT_TRACE_ROOT` trace bundle and item events from the app-server's own notifications, not from the model's report. This binary is main `6288753b46` plus a release commit, 10 commits after the source pin; none of the ten touches `core/src/session`, `core/src/client.rs`, `codex-api` or `models-manager`, so the rows below speak for the pin.
+
+| Claim | How it was confirmed | Result |
+|---|---|---|
+| **Under `instant_interrupt`, a WebSocket response cut by a steer is drained and continued, not dropped and resent** | `gpt-6-sol` (`use_responses_lite: true`), flag on | Confirmed. The first response ended as `inference_completed`, not cancelled; the follow-up `response.create` carried a `previous_response_id` equal to that response's id and an `input` holding the steer message alone. One WebSocket connect served both requests |
+| A `use_responses_lite` model discards the partial item | same run | Consistent, not byte-observed. The counting message streamed deltas but never reached `item/completed`, and the first response ended about 0.3 s after the steer where the other runs took 13 to 14 s. No `RUST_LOG` target in this build logs outgoing WebSocket frames, so `response.interrupt` with `discard_partial_items` still rests on the source |
+| **A model without `use_responses_lite` is read to completion** | `gpt-5.5`, flag on | Confirmed. The counting message completed with all 400 lines before the follow-up, which again continued by `previous_response_id` with the steer alone |
+| With the flag off, a steer does not preempt the response | `gpt-6-sol`, flag off | Confirmed: all 400 lines, then `DONE`, the same shape as the `gpt-5.5` run. Flag-off is not the old drop-and-resend path; that path is gone from this build whatever the flag says |
+| The shipped catalog's lite split | a string search of the binary; `codex debug models` | The binary embeds the bundled `models.json` with nine `"use_responses_lite": true` and one `false`, matching the ledger. The catalog the server returned at run time differs — nine slugs, `gpt-reserve` present and `gpt-daybreak-*` absent — with `gpt-5.5` still the only non-lite slug |
+
+Not probed: a steer landing during request setup (the earliest steer arrived after the first delta), the SSE drop path, and message-board delivery gating, which needs `multi_agent_v2`, `agent_message_board` and a mid-turn post from another agent. Those rows rest on the source alone.
 
 ## Re-verification procedure
 
