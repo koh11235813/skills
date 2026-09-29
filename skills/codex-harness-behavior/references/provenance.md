@@ -370,6 +370,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Code mode runs in a separate host process | mechanism §6 | `code-mode/src/remote_session.rs` | `OwnedCodeModeHost` |
 | Guardian review injects a bounded root-conversation authorization block | mechanism §6 | `guardian-context/src/authorization.rs` | `ROOT CONVERSATION START` |
 | The block also carries host-verified `request_user_input` answers, the verified paths of user-owned skills invoked on the latest root user turn, and an incomplete-evidence marker | mechanism §6 | `core/src/agent/control/user_authorization.rs`; `core/src/context/guardian_review_evidence.rs` | `GuardianRootMessage::IncompleteVerifiedAnswers`; `trusted_skill_paths` |
+| …and neither that marker nor the omitted-root-instructions marker blocks cached fast approval any more; only the reviewed thread's own incomplete retained answers do | mechanism §6 | `ext/guardian-v2/src/async_scorer/approval.rs`; `core/src/agent/control/user_authorization.rs` | `Root omissions remain visible to the classifier`; `GuardianRootMessage::IncompleteRootInstructions` |
 | `wait_agent` clamps a too-short timeout | mechanism §6 | `core/src/tools/handlers/multi_agents_v2/wait.rs` | `was clamped to the minimum of` |
 | apply_patch refuses duplicate resolved paths | SKILL triage, mechanism §2 | `apply-patch/src/invocation.rs` | `multiple operations target` |
 | apply_patch disables symlink traversal when the sandbox is bypassed | mechanism §2 | `core/src/tools/runtimes/apply_patch.rs` | `follow_symlinks` |
