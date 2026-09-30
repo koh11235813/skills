@@ -178,6 +178,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 
 | Claim | Where it ships | Source | Match on |
 |---|---|---|---|
+| `<environment_context>` carries a `<network enabled="true">` element with allowed/denied domains only when managed requirements define `network`; user config and `-c` overrides never produce it | mechanism §1 | `core/src/context/world_state/environment.rs`; `core/src/context/environment_context.rs`; `config/src/config_requirements.rs` | `fn network_from_turn_context`; `<network enabled=` |
 | `project_doc_max_bytes` default is 32 KiB, total | SKILL outside playbook, mechanism §1 | `config/src/config_toml.rs` | `pub const DEFAULT_PROJECT_DOC_MAX_BYTES`; `DEFAULT_PROJECT_DOC_MAX_BYTES` |
 | AGENTS.md cut mid-file; only trace is a server-side log | SKILL outside playbook, mechanism §1 | `core/src/agents_md.rs` | `LOCAL_AGENTS_MD_FILENAME` |
 | Skills catalog gets 2% of the context window | mechanism §1, §6 | `ext/skills/src/render.rs` | `const SKILL_METADATA_CONTEXT_WINDOW_PERCENT`; `SKILL_METADATA_CONTEXT_WINDOW_PERCENT` |
