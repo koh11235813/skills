@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `4773a132c3`, 2026-09-29. Prompt composition probed against `codex-cli 0.158.0-alpha.8` (main `53446f90a5`, 258 commits before the pin); exec behavior still from `0.155.0-alpha.2.3`; `instant_interrupt` steering from `codex-cli 0.160.0-alpha.2` (main `6288753b46` plus a release commit, 55 commits before the pin). The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `92bc601ad6`, 2026-09-30. Prompt composition probed against `codex-cli 0.158.0-alpha.8` (main `53446f90a5`, 314 commits before the pin); exec behavior still from `0.155.0-alpha.2.3`; `instant_interrupt` steering from `codex-cli 0.160.0-alpha.2` (main `6288753b46` plus a release commit, 111 commits before the pin). The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
