@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `92bc601ad6`, 2026-09-30. Prompt composition probed against `codex-cli 0.158.0-alpha.8` (main `53446f90a5`, 314 commits before the pin); exec behavior still from `0.155.0-alpha.2.3`; `instant_interrupt` steering from `codex-cli 0.160.0-alpha.2` (main `6288753b46` plus a release commit, 111 commits before the pin). The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `92bc601ad6`, 2026-09-30. All three probe families re-run against `codex-cli 0.161.0-alpha.4` (main `2e5fea64ee` plus a release commit, 6 commits before the pin); the older per-family tables, from `0.158.0-alpha.8`, `0.155.0-alpha.2.3` and `0.160.0-alpha.2`, are kept as the record of those builds. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
@@ -517,7 +517,40 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 
 ## Empirically verified
 
-Three probe families, run at different times against different builds. Do not read a row as re-verified unless its own family was — the tables are split for exactly that reason. Raw dumps and probe transcripts are not checked in.
+Three probe families. The 2026-09-30 run re-ran all three on one build and is recorded first as a delta against the tables below it; those older tables are kept as the record of what their builds did and as the recipes the re-run followed. Do not read an older row as re-verified unless the 2026-09-30 table names it. Raw dumps and probe transcripts are not checked in.
+
+### All three families — re-run 2026-09-30, `codex-cli 0.161.0-alpha.4`
+
+`0.161.0-alpha.4` is main `2e5fea64ee` plus a release commit, 6 commits before the source pin; it contains every commit this pass corrected the prose for except `de02016798` (user goal edits in history). The probes were driven by a codex session running on this same binary, reporting to the editing session, and every string below was checked against the saved logs rather than taken from the probing model's summary.
+
+- **Prompt composition** followed the recipe in the table below: `codex debug prompt-input` from a scratch repository with a one-line `AGENTS.md`, under a stock `CODEX_HOME` holding only `model = "gpt-6-sol"` and `model_reasoning_effort = "high"` (the `~/.agents/skills` root still leaks in), across every sandbox × approval combination, bare twice, three alternate models, the network and domain overrides, `powershell_shell_version`, `approval_policy = "untrusted"`, and the real home under its default and under `never`. Comparisons are by role and content, ignoring generated message IDs.
+- **Exec behavior** ran `codex exec --json -s read-only -c approval_policy=never --skip-git-repo-check --ephemeral` under the real home on `gpt-5.6-luna` at `xhigh`. Because the session is ephemeral there is no rollout file; `CODEX_ROLLOUT_TRACE_ROOT` kept the raw code-cell and nested-tool payloads instead. A second exec run made one deliberately invalid V1 spawn.
+- **Steering** drove `codex app-server` over stdio under ChatGPT auth with `approvalPolicy: "never"` and `sandbox: "read-only"`, counting 1 to 400 without tools and steering after the fifteenth delta: lite with the flag on, non-lite on, lite off, a steer sent immediately after `turn/start` returned, and an SSE run. The built-in provider cannot be overridden onto HTTP, so the SSE run used a temporary CLI-only custom provider named `OpenAI` with `requires_openai_auth = true` and `supports_websockets = false`; its stderr shows the HTTP transport.
+
+| Claim | Result on `0.161.0-alpha.4` |
+|---|---|
+| Startup markers, roles and wrappers (`<permissions instructions>`, `<environment_context>`, `# AGENTS.md instructions` with the `<INSTRUCTIONS>` wrapper) | Confirmed in every dump |
+| Message shape is set by the model | Confirmed: `gpt-6-sol` and `gpt-6-astra` compose three developer messages plus one user; `gpt-5.6-luna` and `gpt-5.4` one developer plus one user; the real home reproduces the four-message shape and adds recommendations to the first developer message |
+| The multi-agent usage hint is a marked developer fragment | Confirmed wrapped in `<multi_agent_role>` in every `gpt-6-*` dump and absent from `gpt-5.*` dumps — the SKILL.md sentence calling it unmarked was stale before this run and is corrected in this pass |
+| `<environment_context>` elements and profile entries | Confirmed; workspace-write still lists explicit read-only `.git`, `.agents` and `.codex` entries, and danger-full-access renders the profile disabled with no entry rows |
+| A `<network>` element from user-config or `-c` network settings | None, as in every earlier run. `sandbox_workspace_write.network_access=true` changes only the announcement (`Network access is enabled`), and only under workspace-write; the domain overrides change nothing. The source explains it: the element comes only from managed requirements (see the Injected context rows) |
+| `never` announcement, `on-failure` as an alias of `on-request`, the on-request escalation guidance | Confirmed; full access reads `No filesystem sandboxing - all commands are permitted. Network access is enabled.` |
+| `approval_policy = "untrusted"` is refused | Confirmed: exit 1, `Error: approval_policy = "untrusted" is no longer supported; remove this setting` |
+| A default session is in code mode with shell and patch nested | Confirmed for this `gpt-5.6-luna` session; the V1 tools were nested and namespaced (`multi_agent_v1__spawn_agent` …), while the probing session itself had six direct V2 collaboration tools — configuration, not code mode, decides |
+| OS-jail denial is unwrapped stderr; policy refusal is wrapped | Confirmed: `touch: /tmp/codex_probe_a.txt: Operation not permitted` with exit 1; `exec_command failed: CreateProcess { message: "Rejected(\"approval required by policy, but AskForApproval is set to Never\")" }`, no process spawned |
+| Rejected nested call is a string-valued rejected promise | Confirmed: uncaught gives `Script failed`, caught gives `Script completed`; `typeof e` is `string`, `e.name` and `e.message` undefined |
+| Output truncation is budget-driven | Confirmed: 20,001 characters return whole at the default and at `10000`; at `1000` the output is prefixed `Warning: truncated output (original token count: 5001)`, `Total output lines: 1`, then a blank line |
+| V1 full-history fork refuses `agent_type` | Confirmed with the exact string, and no agent was spawned |
+| The spawn description lists models with their effort ladders | Changed in content, not in kind: it now lists `gpt-6.1-sol`, `gpt-6-astra`, `gpt-6-sol`, `gpt-6-luna` and `gpt-5.6-sol`, with `gpt-6-luna` stopping at `max` and the rest reaching `ultra`. The list is the first `MAX_SPAWN_AGENT_MODEL_OVERRIDES` (5) `show_in_picker` presets, so the new default pushed `gpt-5.6-terra`, `gpt-5.6-luna` and `gpt-5.5` off it; they are still spawnable by name |
+| WebSocket steer drains and continues | Confirmed for lite on, non-lite on and lite off: the follow-up carries `previous_response_id` and the steer alone |
+| A lite model discards the partial item | Consistent, not byte-observed: no counting item completed and the first response ended within 0.1 s of the steer; no log target shows the outgoing `response.interrupt` frame |
+| A non-lite model is read to completion; flag off does not preempt | Confirmed: `gpt-5.5` finished all 400 lines 14.6 s after the steer, and `gpt-6-sol` with the flag off 48.0 s after it |
+| **Over SSE the stream is dropped and the unfinished item excluded** | Confirmed for the first time: the first inference ended `inference_cancelled` after the steer, and the next request carried the count prompt and the steer with no partial assistant item and no `previous_response_id` |
+| A steer during request setup is not cancelled | Consistent: a steer sent about 9 s before the first delta left the first request count-only and was continued by `previous_response_id`, but nothing places it inside the setup window |
+| Bundled catalog counts | Changed, matching the source pin: eleven slugs, ten lite and ten `code_mode_only`, `gpt-5.5` still the only exception. The server-returned catalog had ten, with `gpt-reserve` present and the `gpt-daybreak-*` pair absent |
+
+Not probed: SSE retention of completed items and dispatched tool results (the count run completes neither before the steer), message-board delivery gating, the positive PowerShell `shell_version` case and external permission profiles (macOS host), the Guardian prompt and async-tool schemas, and anything in `de02016798`, which the binary predates. The exec model also made a few read-only setup reads of its own before the probe calls; they are in the trace and carry no evidence.
+
 
 ### Prompt composition — re-run 2026-09-25, `codex-cli 0.158.0-alpha.8`
 
