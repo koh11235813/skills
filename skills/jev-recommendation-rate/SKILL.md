@@ -1,6 +1,6 @@
 ---
 name: jev-recommendation-rate
-description: "Attach a recommendation rate to every option of a multiple-choice question, computed by the TypeSafe Jev model. Use right before calling AskUserQuestion with options, and right before emitting a grill round from the grilling or explore-grill-build workflow, so the reader sees how the probability mass is split across the options instead of only which one you picked. Needs JEV_API_KEY, curl and jq; without them, ask the question as usual."
+description: "Attach a recommendation rate to every option of a multiple-choice question, computed by the TypeSafe Jev model. Use right before calling AskUserQuestion with options, and right before emitting a grill round from the grilling or explore-grill-build workflow, so the reader sees how the probability mass is split across the options instead of only which one you picked. Needs TYPESAFE_API_KEY, curl and jq; without them, ask the question as usual."
 ---
 
 # jev-recommendation-rate
@@ -18,7 +18,7 @@ This skill does not decide anything. It adds numbers to a question that a human 
 | An open-ended question with no enumerated options | No. There is nothing to score |
 | A yes/no confirmation | No |
 | Approval for a destructive or irreversible action | No. The human decides alone |
-| `JEV_API_KEY`, `curl` or `jq` missing | No. Ask the question with no rates and say once that they were unavailable |
+| `TYPESAFE_API_KEY`, `curl` or `jq` missing | No. Ask the question with no rates and say once that they were unavailable |
 
 Do not invent options so that a question becomes scorable. If the question is genuinely open, leave it open.
 
@@ -101,7 +101,7 @@ Nothing else about the grilling output format changes.
 
 A missing key, an HTTP error, a timeout: in every case, ask the question as you would have without this skill and add one line saying the rates were unavailable. The question is the point; the numbers are decoration on top of it. Never block a round on the scorer.
 
-The script's exit codes: `1` API or network failure, `2` `JEV_API_KEY` unset, `3` `curl` or `jq` missing.
+The script's exit codes: `1` API or network failure, `2` `TYPESAFE_API_KEY` unset, `3` `curl` or `jq` missing.
 
 ## Cost
 
