@@ -14,7 +14,7 @@
 # Writes one block per question to stdout: every option with its probability,
 # the confidence, and the token cost of the call.
 #
-# Exit: 1 API or network failure, 2 JEV_API_KEY unset, 3 curl or jq missing.
+# Exit: 1 API or network failure, 2 TYPESAFE_API_KEY unset, 3 curl or jq missing.
 
 set -euo pipefail
 
@@ -29,8 +29,8 @@ for cmd in curl jq; do
   }
 done
 
-[ -n "${JEV_API_KEY:-}" ] || {
-  echo "score-options.sh: JEV_API_KEY is not set. Get a key at https://typesafe.ai and export it, or ask the question without recommendation rates." >&2
+[ -n "${TYPESAFE_API_KEY:-}" ] || {
+  echo "score-options.sh: TYPESAFE_API_KEY is not set. Get a key at https://typesafe.ai and export it, or ask the question without recommendation rates." >&2
   exit 2
 }
 
@@ -67,7 +67,7 @@ body=$(jq -n \
 
 response=$(curl -sS --max-time 20 -w '\n%{http_code}' \
   -X POST "$API_URL" \
-  -H "Authorization: Bearer $JEV_API_KEY" \
+  -H "Authorization: Bearer $TYPESAFE_API_KEY" \
   -H 'Content-Type: application/json' \
   -d "$body") || { echo "score-options.sh: request to $API_URL failed." >&2; exit 1; }
 

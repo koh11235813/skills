@@ -15,7 +15,7 @@ Recommended source is [`mattpocock/skills`](https://github.com/mattpocock/skills
 npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 ```
 
-`jev-recommendation-rate` attaches a recommendation rate to each option of a grill-round question. It needs `JEV_API_KEY`, `curl` and `jq`; when any of them is missing its own script exits with a message and the round goes out unscored. It ships in this repository, so `npx skills add koh11235813/skills` already installs it.
+`jev-recommendation-rate` attaches a recommendation rate to each option of a grill-round question. It needs `TYPESAFE_API_KEY`, `curl` and `jq`; when any of them is missing its own script exits with a message and the round goes out unscored. It ships in this repository, so `npx skills add koh11235813/skills` already installs it.
 
 A skill under another name that does the same job (for example a harness-native TDD skill) counts as present; do not suggest this install just because the literal name is missing.
 
