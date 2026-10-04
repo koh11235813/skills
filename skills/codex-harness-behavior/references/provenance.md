@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `9d2b60303e`, 2026-10-02. All three probe families re-run against `codex-cli 0.161.0-alpha.4` (main `2e5fea64ee` plus a release commit, 134 commits before the pin); the older per-family tables, from `0.158.0-alpha.8`, `0.155.0-alpha.2.3` and `0.160.0-alpha.2`, are kept as the record of those builds. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `afb436df8b`, 2026-10-04. All three probe families re-run against `codex-cli 0.161.0-alpha.4` (main `2e5fea64ee` plus a release commit, 202 commits before the pin); the older per-family tables, from `0.158.0-alpha.8`, `0.155.0-alpha.2.3` and `0.160.0-alpha.2`, are kept as the record of those builds. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
@@ -321,7 +321,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | **Multi-agent V1 is stable and default-enabled**, and V2 (`multi_agent_v2`) is Stable but default **off** | SKILL default surface, mechanism §6 | `features/src/lib.rs` | `key: "multi_agent"`; `key: "multi_agent_v2"` |
 | The resolved version comes from the V2 feature, else the model catalog, else the `multi_agent` feature | SKILL default surface, mechanism §6 | `core/src/config/mod.rs` | `fn multi_agent_version_for_model` |
 | V2 replaces `send_input`/`resume_agent`/`close_agent`: `spawn_agent`, `interrupt_agent` and `list_agents` always register, `wait_agent` per `wait_agent_enabled`, and `send_message`/`followup_task` only while `[features.multi_agent_v2].disable_direct_message` is false (the default); with direct messages disabled in a non-internal session and no message-board `post` tool exposed, the router build fails with `disable_direct_message requires an available agent message board in this session` | SKILL default surface, mechanism §6 | `core/src/tools/spec_plan.rs` | `SendMessageHandlerV2`; `wait_agent_enabled` |
-| V1's tools register `Deferred` on a search-capable model | mechanism §6 | `core/src/tools/spec_plan.rs` | `fn search_tool_enabled` |
+| V1's tools register `Deferred` on a search-capable model | mechanism §6 | `core/src/tools/spec_plan.rs` | `let exposure = if context.model_info.supports_search_tool` |
 | Spawn depth defaults to 1 | SKILL default surface, mechanism §6 | `core/src/config/mod.rs` | `const DEFAULT_AGENT_MAX_DEPTH`; `agent_max_depth` |
 | Under V2 the catalog's `multi_agent.mode` replaces the built-in effort-derived delegation posture; config `multi_agent_mode_hint_text` outranks it, and the resolver returns nothing for V1 | SKILL Layer 0, mechanism §6 | `core/src/session/multi_agents.rs`; `protocol/src/openai_models.rs` | `fn effective_multi_agent_mode` |
 | …an empty mode string deletes the section rather than restoring the built-in text, and custom text is truncated to 400 tokens | SKILL Layer 0, mechanism §6 | `core/src/context/multi_agent_mode_instructions.rs`; `core/src/context/world_state/multi_agent_mode.rs` | `const MULTI_AGENT_MODE_MAX_TOKENS` |
