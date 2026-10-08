@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `551bd409eb`, 2026-10-06. All three probe families re-run against `codex-cli 0.161.0-alpha.4` (main `2e5fea64ee` plus a release commit, 267 commits before the pin); the older per-family tables, from `0.158.0-alpha.8`, `0.155.0-alpha.2.3` and `0.160.0-alpha.2`, are kept as the record of those builds. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `9b738582b1`, 2026-10-08. All three probe families re-run against `codex-cli 0.161.0-alpha.4` (main `2e5fea64ee` plus a release commit, 382 commits before the pin); the older per-family tables, from `0.158.0-alpha.8`, `0.155.0-alpha.2.3` and `0.160.0-alpha.2`, are kept as the record of those builds. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
@@ -181,7 +181,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | Claim | Where it ships | Source | Match on |
 |---|---|---|---|
 | `<environment_context>` carries a `<network enabled="true">` element with allowed/denied domains only when managed requirements define `network`; user config and `-c` overrides never produce it | mechanism §1 | `core/src/context/world_state/environment.rs`; `core/src/context/environment_context.rs`; `config/src/config_requirements.rs` | `fn network_from_turn_context`; `<network enabled=` |
-| The system prompt is a markerless developer message in the request `input` on every model, with a thread-stable `msg_` id, after a single `additional_tools` item on a responses-lite model with tools; there is no top-level `instructions` field, and `codex debug prompt-input` omits it | mechanism §1 | `core/src/client.rs`; `core/src/context/base_instructions.rs`; `core/src/prompt_debug.rs` | `ContextualUserFragment::into(BaseInstructionsFragment(`; `prefix.push(ResponseItem::AdditionalTools {`; `const KIND: &str = "model.base_instructions";`; `let prompt = build_prompt(prompt_input, step_context.as_ref(), base_instructions);` |
+| The system prompt is a markerless developer message in the request `input` on every model, with a thread-stable `msg_` id, after a single `additional_tools` item on a responses-lite model with tools; there is no top-level `instructions` field, and `codex debug prompt-input` omits it | mechanism §1 | `core/src/client.rs`; `core/src/context/base_instructions.rs`; `core/src/prompt_debug.rs` | `ContextualUserFragment::into(BaseInstructionsFragment(`; `prefix.push(ResponseItem::AdditionalTools {`; `const KIND: &str = "model.base_instructions";`; `let prompt = build_prompt(` |
 | `project_doc_max_bytes` default is 32 KiB, total | SKILL outside playbook, mechanism §1 | `config/src/config_toml.rs` | `pub const DEFAULT_PROJECT_DOC_MAX_BYTES`; `DEFAULT_PROJECT_DOC_MAX_BYTES` |
 | AGENTS.md cut mid-file; only trace is a server-side log | SKILL outside playbook, mechanism §1 | `core/src/agents_md.rs` | `LOCAL_AGENTS_MD_FILENAME` |
 | Skills catalog gets 2% of the context window | mechanism §1, §6 | `ext/skills/src/render.rs` | `const SKILL_METADATA_CONTEXT_WINDOW_PERCENT`; `SKILL_METADATA_CONTEXT_WINDOW_PERCENT` |
