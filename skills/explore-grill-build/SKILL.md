@@ -25,8 +25,6 @@ This is a five-phase gauntlet. It's worth it for a feature with real design spac
 
 ## Runtime capability check
 
-When running in Pi, read [the Pi adapter](references/harness-adapters/pi.md) before checking capabilities; its subagent, permission, and persistence mappings depend on the installed extensions, not the harness name.
-
 Before Phase 0, inspect the current runtime's visible tools, permissions, and workspace topology. Mark each capability **confirmed**, **unavailable**, or **unverified**. Never infer support from a harness name, model family, or a similarly named command.
 
 - `plan_artifact` — a writable plan artifact that later reviewers can read.
@@ -194,4 +192,4 @@ A few things hold across every phase above, worth stating once instead of five t
 - **Capability gates outlive the phase that ran them.** A companion skill loaded mid-workflow inherits this session's confirmed/unavailable marks; its own instructions to delegate, spawn, or invoke don't re-open a gate that was closed in the runtime check.
 - **Scale effort to the task.** See Scope, above — this doesn't stop mattering once you're mid-flow.
 
-Use a runtime adapter only when one exists and its described capabilities are confirmed in the current session. See `references/harness-adapters/` — `claude-code.md`, `codex.md`, `opencode.md`, `hermes-agent.md`, and [`pi.md`](references/harness-adapters/pi.md). Record the evidence required before adding or changing an adapter in `references/harness-adapters/README.md`; an adapter is a mapping, not a fallback specification.
+Use a runtime adapter only when one exists and its described capabilities are confirmed in the current session. See `references/harness-adapters/` — `claude-code.md`, `codex.md`, `opencode.md`, and `hermes-agent.md`. Record the evidence required before adding or changing an adapter in `references/harness-adapters/README.md`; an adapter is a mapping, not a fallback specification.
