@@ -48,13 +48,17 @@ The inspected schema supports exactly one mode per call:
 
 These are templates, not literal agent names. Include the absolute artifact/workspace paths, capability restrictions, and required result in each task. Inspect every child's errors and output before accepting the dispatch; a truncated or failed result does not satisfy a review gate.
 
-Model selection belongs to the existing agent definition's `model` frontmatter, not an invented per-call `model` argument. Without an override, the inspected example inherits the dispatching session's model and thinking level. Choosing `scout`, `planner`, or `reviewer` does not establish a cheaper, stronger, or different-provider model.
+Model selection belongs to the existing agent definition's `model` frontmatter, not an invented per-call `model` argument. Without an override, the inspected example inherits the dispatching session's model and thinking level. The example's sample agents each declare a `model` (`scout` a Haiku tier, the others a Sonnet tier), but local copies may remove or change it; read the installed definition and confirm the model is reachable instead of relying on the role name.
+
+### Write-capable delegates
+
+Parallel build slices need a write-capable agent. The example ships `worker`, a general-purpose agent with no `tools` restriction, and its install instructions copy it to the user agent directory with the other sample agents; its `/implement` and `/implement-and-review` prompts use it as the implementer. When such an agent is registered, prefer it for write delegates after reading its definition for `tools` and `model`. Starting it with `--no-session` means it cannot serve as the persistent implementer of the manager loop, and it never satisfies a read-only or external-review gate.
 
 ### Read-only discovery and review
 
 Inspect both the agent definition and the child runtime's effective tool reach. A reader-only list such as `tools: read, grep, find, ls` is a candidate, not sufficient evidence by itself: loaded extensions can replace tools or expose other execution paths, and CLI `--tools` selection alone does not remove all MCP reach. Confirm enforcement over the full child tool set before marking `delegate_readonly` confirmed.
 
-In the observed local setup, `scout` and `reviewer` expose `bash`, and the inherited guard mode is `normal`, not `readonly`. The reviewer's instruction to use only read-only commands is not enforcement. `planner` lists only reader tools, but its frontmatter alone does not verify the loaded extension/MCP paths. None of these role names automatically passes the eligibility gate.
+In the observed local setup, `scout` and `reviewer` expose `bash`, and the inherited guard mode is `normal`, not `readonly`. The reviewer's instruction to use only read-only commands is not enforcement. `planner` lists only reader tools, but its frontmatter alone does not verify the loaded extension/MCP paths. None of these role names automatically passes the eligibility gate. These three local definitions drop the sample's `model` line and inherit the session model. The local `worker` keeps full tools and declares a different model, `deepseek/deepseek-v4-flash-0731`, which is listed in the local model store but was not dispatched in this check.
 
 Use an eligible fresh-context reviewer when one is confirmed, preferring a different provider as specified in [external-review.md](../external-review.md). Otherwise stop at the review gate for a human exception. Do not silently replace the external review with a write-capable `reviewer` or self-review, or weaken permissions to make a child run.
 
