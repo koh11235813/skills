@@ -11,7 +11,7 @@ Checked against the installed `@earendil-works/pi-coding-agent` **1.2.0** docume
 - [Subagent example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent) — agent definitions, dispatch, model inheritance, and results; `runSingleAgent` in `index.ts` starts each child with `--no-session`.
 - [Command line](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli.md) and [extensions](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md) — tool selection, extension/MCP reach, and non-interactive UI limits.
 
-These public links track upstream; the observations below describe the installed version, not a promise about every Pi installation. The local `worktree` and `questionnaire` tools are not part of the core or the subagent example. This adapter configures neither agents nor extensions.
+These public links track upstream; the observations below describe the installed version, not a promise about every Pi installation. The `questionnaire` tool is a separate example extension shipped with Pi, not part of the core or the subagent example; the `worktree` argument comes from a local extension. This adapter configures neither agents nor extensions.
 
 ## Capability mapping
 
@@ -34,7 +34,7 @@ Use the advertised skill path with `read`; loading instructions is Pi's model-si
 
 Use the common plan file as the source of truth. Give delegates its absolute path and confirm readability; if a child cannot read it, supply the complete text. Worktrees start from HEAD in the observed local extension, so they do not include uncommitted plan or implementation files from the parent workspace.
 
-When the local `questionnaire` tool is exposed, use its actual schema (`questions` with `id`, `prompt`, and `options`) for interview rounds and human gates. Otherwise ask in ordinary conversation and stop for the reply. A canceled question is not approval. Keep build approval, a review exception, worktree integration approval, and commit approval distinct.
+When a tool that asks the user structured questions is exposed, use its actual schema for interview rounds and human gates; the bundled `questionnaire` example, for instance, takes `questions` with `id`, `prompt`, and `options`. Otherwise ask in ordinary conversation and stop for the reply. A canceled question is not approval. Keep build approval, a review exception, worktree integration approval, and commit approval distinct.
 
 ## Subagent dispatch
 
