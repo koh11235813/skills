@@ -11,7 +11,7 @@ Checked against the installed `@earendil-works/pi-coding-agent` **1.2.0** docume
 - [Subagent example](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent) — agent definitions, dispatch, model inheritance, and results; `runSingleAgent` in `index.ts` starts each child with `--no-session`.
 - [Command line](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli.md) and [extensions](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/extensions.md) — tool selection, extension/MCP reach, and non-interactive UI limits.
 
-These public links track upstream; the observations below describe the installed version, not a promise about every Pi installation. The local `worktree` and `questionnaire` tools are not part of the core or the subagent example. This adapter configures neither agents nor extensions.
+These public links track upstream; the observations below describe the installed version, not a promise about every Pi installation. The `questionnaire` tool is a separate example extension shipped with Pi, not part of the core or the subagent example; the `worktree` argument comes from a local extension. This adapter configures neither agents nor extensions.
 
 ## Capability mapping
 
@@ -34,7 +34,7 @@ Use the advertised skill path with `read`; loading instructions is Pi's model-si
 
 Use the common plan file as the source of truth. Give delegates its absolute path and confirm readability; if a child cannot read it, supply the complete text. Worktrees start from HEAD in the observed local extension, so they do not include uncommitted plan or implementation files from the parent workspace.
 
-When the local `questionnaire` tool is exposed, use its actual schema (`questions` with `id`, `prompt`, and `options`) for interview rounds and human gates. Otherwise ask in ordinary conversation and stop for the reply. A canceled question is not approval. Keep build approval, a review exception, worktree integration approval, and commit approval distinct.
+When a tool that asks the user structured questions is exposed, use its actual schema for interview rounds and human gates; the bundled `questionnaire` example, for instance, takes `questions` with `id`, `prompt`, and `options`. Otherwise ask in ordinary conversation and stop for the reply. A canceled question is not approval. Keep build approval, a review exception, worktree integration approval, and commit approval distinct.
 
 ## Subagent dispatch
 
@@ -48,13 +48,17 @@ The inspected schema supports exactly one mode per call:
 
 These are templates, not literal agent names. Include the absolute artifact/workspace paths, capability restrictions, and required result in each task. Inspect every child's errors and output before accepting the dispatch; a truncated or failed result does not satisfy a review gate.
 
-Model selection belongs to the existing agent definition's `model` frontmatter, not an invented per-call `model` argument. Without an override, the inspected example inherits the dispatching session's model and thinking level. Choosing `scout`, `planner`, or `reviewer` does not establish a cheaper, stronger, or different-provider model.
+Model selection belongs to the existing agent definition's `model` frontmatter, not an invented per-call `model` argument. Without an override, the inspected example inherits the dispatching session's model and thinking level. The example's sample agents each declare a `model` (`scout` a Haiku tier, the others a Sonnet tier), but local copies may remove or change it; read the installed definition and confirm the model is reachable instead of relying on the role name.
+
+### Write-capable delegates
+
+Parallel build slices need a write-capable agent. The example ships `worker`, a general-purpose agent with no `tools` restriction, and its install instructions copy it to the user agent directory with the other sample agents; its `/implement` and `/implement-and-review` prompts use it as the implementer. When such an agent is registered, prefer it for write delegates after reading its definition for `tools` and `model`. Starting it with `--no-session` means it cannot serve as the persistent implementer of the manager loop, and it never satisfies a read-only or external-review gate.
 
 ### Read-only discovery and review
 
 Inspect both the agent definition and the child runtime's effective tool reach. A reader-only list such as `tools: read, grep, find, ls` is a candidate, not sufficient evidence by itself: loaded extensions can replace tools or expose other execution paths, and CLI `--tools` selection alone does not remove all MCP reach. Confirm enforcement over the full child tool set before marking `delegate_readonly` confirmed.
 
-In the observed local setup, `scout` and `reviewer` expose `bash`, and the inherited guard mode is `normal`, not `readonly`. The reviewer's instruction to use only read-only commands is not enforcement. `planner` lists only reader tools, but its frontmatter alone does not verify the loaded extension/MCP paths. None of these role names automatically passes the eligibility gate.
+In the observed local setup, `scout` and `reviewer` expose `bash`, and the inherited guard mode is `normal`, not `readonly`. The reviewer's instruction to use only read-only commands is not enforcement. `planner` lists only reader tools, but its frontmatter alone does not verify the loaded extension/MCP paths. None of these role names automatically passes the eligibility gate. These three local definitions drop the sample's `model` line and inherit the session model. The local `worker` keeps full tools and declares a different model, `deepseek/deepseek-v4-flash-0731`, which is listed in the local model store but was not dispatched in this check.
 
 Use an eligible fresh-context reviewer when one is confirmed, preferring a different provider as specified in [external-review.md](../external-review.md). Otherwise stop at the review gate for a human exception. Do not silently replace the external review with a write-capable `reviewer` or self-review, or weaken permissions to make a child run.
 
