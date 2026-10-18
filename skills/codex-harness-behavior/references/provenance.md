@@ -284,6 +284,7 @@ The **match on** column is what to `rg` for. It is deliberately *not* the full s
 | `invalid_grant` on a 400 is a permanent, cached refresh failure; other 400s stay transient | mechanism §5 | `login/src/auth/manager.rs`; `core/src/client.rs` | `let is_invalid_grant_bad_request = status == StatusCode::BAD_REQUEST`; `is_invalid_grant_bad_request` |
 | Queued messages committed by another process start turns on already-loaded, idle threads | mechanism §5 | `ext/queue/src/service.rs`; `state/src/runtime/queued_items.rs`; `app-server/src/extensions.rs` | `watch_external_messages` |
 | Read-only built-ins are parallel-safe and take the shared lock, `get_goal` alone among the goal tools; a non-parallel tool takes the exclusive lock, and a `Hidden` tool is never parallel (`c9e0fffbbc`) | mechanism §2 | `core/src/tools/parallel.rs`; `core/src/tools/registry.rs`; `ext/goal/src/tool.rs` | `lock.write().await`; `tool.exposure != ToolExposure::Hidden && tool.runtime.supports_parallel_tool_calls()`; `matches!(self.kind, GoalToolKind::Get)` |
+| Client-supplied dynamic tools are parallel-safe and take the shared lock, deferred or not, since no dynamic tool is ever `Hidden` (`beae473be8`) | mechanism §2 | `core/src/tools/handlers/dynamic.rs`; `core/src/tools/registry.rs` | `impl ToolExecutor<ToolInvocation> for DynamicToolHandler`; `fn supports_parallel_tool_calls`; `tool.exposure != ToolExposure::Hidden && tool.runtime.supports_parallel_tool_calls()` |
 
 ## Cross-cutting loops
 
