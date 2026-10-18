@@ -2,7 +2,7 @@
 
 Evidence for every load-bearing claim in `SKILL.md` and `references/mechanism.md`, so the next update is a diff against this table rather than a re-reading of the prose.
 
-**Pinned:** codex-rs `main` @ `f0c5077c34`, 2026-10-15. All three probe families re-run against `codex-cli 0.161.0-alpha.4` (main `2e5fea64ee` plus a release commit, 637 commits before the pin); the older per-family tables, from `0.158.0-alpha.8`, `0.155.0-alpha.2.3` and `0.160.0-alpha.2`, are kept as the record of those builds. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
+**Pinned:** codex-rs `main` @ `8c076942cb`, 2026-10-18. All three probe families re-run against `codex-cli 0.161.0-alpha.4` (main `2e5fea64ee` plus a release commit, 701 commits before the pin); the older per-family tables, from `0.158.0-alpha.8`, `0.155.0-alpha.2.3` and `0.160.0-alpha.2`, are kept as the record of those builds. The binaries and the source tree are close but not identical, so treat a disagreement between them as a version gap rather than an error.
 
 Paths are relative to `codex-rs/` in the [openai/codex](https://github.com/openai/codex) repository.
 
