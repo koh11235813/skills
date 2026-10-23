@@ -9,7 +9,7 @@ Every action an agent takes under codex is mediated: what it reads is composed b
 
 This file is the operational layer — what is true, how to tell which state you are in, and what to do when something fails. The full mechanism (how each layer is built, the complete rejection-string table, the byte-level details) lives in `references/mechanism.md`. The evidence behind every claim — source file and the keyword to re-grep — lives in `references/provenance.md`.
 
-Verified against codex-rs `main` at commit `f29d55ff06`, 2026-10-20. Prompt composition, exec behavior and `instant_interrupt` steering were all re-probed against `codex-cli 0.161.0-alpha.4`, 788 commits older. That branch moves at roughly 50 commits/day, so treat exact strings as keywords to match on, never as a stable API.
+Verified against codex-rs `main` at commit `1c0c45bfc3`, 2026-10-23. Prompt composition, exec behavior and `instant_interrupt` steering were all re-probed against `codex-cli 0.161.0-alpha.4`, 944 commits older. That branch moves at roughly 50 commits/day, so treat exact strings as keywords to match on, never as a stable API.
 
 ## Mental model
 
