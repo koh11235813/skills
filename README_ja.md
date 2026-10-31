@@ -20,6 +20,8 @@ npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 
 ### 外部依存
 
+`explore-grill-build` は、実装担当として任意で [pi](https://github.com/earendil-works/pi) か [codex](https://github.com/openai/codex) を使う。ペインで実行を動かすなら `tmux` も要る。レビュー担当には `claude`（Claude Code）で Opus か Fable を使うよ。codex の `--profile openrouter` を使う場合は `~/.codex/openrouter.config.toml` も必要。実装に必要なものが揃わなければ、実行環境のネイティブな委任機能か、その場での実装にフォールバックするよ。`claude` が無ければ、レビューは未実施だと伝えて、レビューなしで先へ進む例外の許可を人に求めるよ。
+
 ここのスキルはほとんどが markdown だけで完結する。例外は `jev-recommendation-rate` で、シェルスクリプトから [TypeSafe](https://typesafe.ai) の API を叩くので、`curl` と `jq`、それに環境変数 `TYPESAFE_API_KEY` が要る。
 
 `jq` は多くの Linux ディストリの標準構成には入っていない（最近の macOS には同梱されている）:
