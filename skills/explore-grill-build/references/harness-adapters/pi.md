@@ -60,7 +60,7 @@ Inspect both the agent definition and the child runtime's effective tool reach. 
 
 In the observed local setup, `scout` and `reviewer` expose `bash`, and the inherited guard mode is `normal`, not `readonly`. The reviewer's instruction to use only read-only commands is not enforcement. `planner` lists only reader tools, but its frontmatter alone does not verify the loaded extension/MCP paths. None of these role names automatically passes the eligibility gate. These three local definitions drop the sample's `model` line and inherit the session model. The local `worker` keeps full tools and declares a different model, `deepseek/deepseek-v4-flash-0731`, which is listed in the local model store but was not dispatched in this check.
 
-Use an eligible fresh-context reviewer when one is confirmed, preferring a different provider as specified in [external-review.md](../external-review.md). Otherwise stop at the review gate for a human exception. Do not silently replace the external review with a write-capable `reviewer` or self-review, or weaken permissions to make a child run.
+Use an eligible fresh-context reviewer when one is confirmed, with reviewer choice specified in [external-review.md](../external-review.md). Otherwise stop at the review gate for a human exception. Do not silently replace the external review with a write-capable `reviewer` or self-review, or weaken permissions to make a child run.
 
 ### Local worktree extension
 

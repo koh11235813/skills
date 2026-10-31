@@ -28,7 +28,9 @@ State that the work is a read-only review even when enforcement exists. Treat th
 
 ## Triaging GPT-family reviews
 
-A GPT-family review is optional input. It is relentless and surfaces edge cases out of proportion to their importance, so an Opus or Fable triager decides which findings become fixes; under Claude Code, the main conductor may perform this triage itself. Give the triager the findings plus the diff and ask it to return `fix` or `skip` for each finding with a one-line reason. These decisions are the explicit follow-up step this reference requires. Include every finding and decision, including skips, in the human gate summary.
+A GPT-family review is optional input. It is relentless and surfaces edge cases out of proportion to their importance, so an Opus or Fable triager decides which findings become fixes; under Claude Code, the main conductor may perform this triage itself. The same conductor-may-decide allowance also covers an Opus or Fable review's findings under Claude Code. Give the triager the findings plus the diff and ask it to return `fix` or `skip` for each finding with a one-line reason. These decisions are the explicit follow-up step this reference requires. Include every finding and decision, including skips, in the human gate summary.
+
+For Phase 4, run any optional GPT-family review first, triage its findings, apply the accepted fixes, then run the Opus or Fable review once over the complete resulting diff. That final review is the one external review the workflow's "exactly once" refers to.
 
 ## Handling the result
 

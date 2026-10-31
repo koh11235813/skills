@@ -131,7 +131,7 @@ Implement the reviewed plan test-first.
 
 ### Who writes the code
 
-When `implementer_cli` is confirmed, it is the default writer: the orchestrator delegates each slice or phase to it and stays the manager and verifier rather than typing the implementation. Pick the command and model mapping from the runtime adapter. Concurrent writers still require the isolation and parent-controlled integration gate below. When no CLI path is confirmed, fall back to a native write delegate, then inline implementation, recording the reason. Keep the implementer separate from its Phase 4 reviewer; the implementer never serves as its own external reviewer.
+When `implementer_cli` is confirmed, it is the default writer: the orchestrator delegates each slice or phase to it and stays the manager and verifier rather than typing the implementation. Pick the command and model mapping from the runtime adapter. A CLI session whose probe demonstrated resumption with context intact also confirms `delegate_persistent` for the manager loop. Concurrent writers still require the isolation and parent-controlled integration gate below. When no CLI path is confirmed, fall back to a native write delegate, then inline implementation, recording the reason. Keep the implementer separate from its Phase 4 reviewer; the implementer never serves as its own external reviewer.
 
 ### Which loop
 
@@ -179,7 +179,7 @@ Read your own (or your delegates') diff directly. Run tests and typecheck. If a 
 
 Use the same eligibility gate as Phase 2 — see [references/external-review.md](references/external-review.md) — but hand the reviewer the actual diff and touched-files list instead of the plan document. Frame the ask as reviewing real code: correctness, edge cases the tests might have missed, and anywhere implementation drifted from the reviewed plan. Handing over the complete diff in one pass is deliberate — it lets the reviewer catch cross-slice interactions that no per-slice check could see.
 
-Per that reference's ground rule: never auto-apply anything this review suggests. Surface the findings; let the human or the reference's triage step decide what happens to them. This rule is absolute here, unlike the self-review step above — this is an outside opinion, not the orchestrator's own already-checked work.
+Per that reference's ground rule: never auto-apply anything this review suggests. Surface the findings; let the human or the reference's triage step decide what happens to them. Apply findings only after an explicit decision by the human or by that triage step, never silently; include every finding and decision in the human gate summary.
 
 There's no weak-model legibility pass here — that technique specifically catches underspecified *plans*, where a cheap model's confusion is diagnostic of missing detail. A diff is either correct or it isn't; a cheap model's read on that isn't informative the same way.
 
@@ -193,7 +193,7 @@ Never commit without that explicit go-ahead. This isn't specific to this workflo
 
 A few things hold across every phase above, worth stating once instead of five times:
 
-- **External findings are never auto-applied** (except the explicit Phase 4.1 self-review carve-out). Whether it's the Phase 2 plan review or the Phase 4 external diff review, an outside agent's output is input to a decision someone makes explicitly — never a patch applied silently.
+- **External findings are never auto-applied** (except the explicit Phase 4.1 self-review carve-out). Whether it's the Phase 2 plan review or the Phase 4 external diff review, an outside agent's findings are applied only after an explicit decision by the human or by the triage step in [references/external-review.md](references/external-review.md) — never a patch applied silently. Every finding and decision still reaches the human gate.
 - **The plan document is the source of truth, not the conversation.** Every phase after Phase 1 reads the plan, not chat history. Keep it current.
 - **Delegation doesn't remove verification.** Whatever tier of subagent did the work, the orchestrator checks it before moving on.
 - **Capability gates outlive the phase that ran them.** A companion skill loaded mid-workflow inherits this session's confirmed/unavailable marks; its own instructions to delegate, spawn, or invoke don't re-open a gate that was closed in the runtime check.
