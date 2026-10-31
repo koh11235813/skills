@@ -179,7 +179,7 @@ Read your own (or your delegates') diff directly. Run tests and typecheck. If a 
 
 Use the same eligibility gate as Phase 2 — see [references/external-review.md](references/external-review.md) — but hand the reviewer the actual diff and touched-files list instead of the plan document. Frame the ask as reviewing real code: correctness, edge cases the tests might have missed, and anywhere implementation drifted from the reviewed plan. Handing over the complete diff in one pass is deliberate — it lets the reviewer catch cross-slice interactions that no per-slice check could see.
 
-Per that reference's ground rule: never auto-apply anything this review suggests. Surface the findings; let the human or an explicit next step decide what happens to them. This rule is absolute here, unlike the self-review step above — this is an outside opinion, not the orchestrator's own already-checked work.
+Per that reference's ground rule: never auto-apply anything this review suggests. Surface the findings; let the human or the reference's triage step decide what happens to them. This rule is absolute here, unlike the self-review step above — this is an outside opinion, not the orchestrator's own already-checked work.
 
 There's no weak-model legibility pass here — that technique specifically catches underspecified *plans*, where a cheap model's confusion is diagnostic of missing detail. A diff is either correct or it isn't; a cheap model's read on that isn't informative the same way.
 
