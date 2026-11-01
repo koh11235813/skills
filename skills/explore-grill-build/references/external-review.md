@@ -17,7 +17,7 @@ If no eligible reviewer exists, record the reason in the plan or handoff, tell t
 
 ## Reviewer choice
 
-Use a Claude Opus or Fable reviewer that passes the eligibility gate; the applicable harness adapter gives the command. Record any fallback to another model and why in the plan or handoff. Independence from the code author comes from a fresh context plus a family different from the implementer's when the implementer is not Claude. If the implementer was Claude, record that the reviewer shares its family.
+Use Claude Opus or Fable under Claude Code, and pi with glm-5.3-flash under Codex, with each reviewer passing the eligibility gate; the applicable harness adapter gives each command. Record any fallback to another model and why in the plan or handoff. Independence from the code author comes from a fresh context plus a different family: a Claude reviewer differs from a non-Claude implementer, and under Codex the GLM reviewer differs from a GPT implementer. If the reviewer shares the implementer's family, record that fact.
 
 ## Framing the ask
 
@@ -28,9 +28,9 @@ State that the work is a read-only review even when enforcement exists. Treat th
 
 ## Triaging GPT-family reviews
 
-A GPT-family review is optional input. It is relentless and surfaces edge cases out of proportion to their importance, so an Opus or Fable triager decides which findings become fixes; under Claude Code, the main conductor may perform this triage itself. The same conductor-may-decide allowance also covers an Opus or Fable review's findings under Claude Code. Give the triager the findings plus the diff and ask it to return `fix` or `skip` for each finding with a one-line reason. These decisions are the explicit follow-up step this reference requires. Include every finding and decision, including skips, in the human gate summary.
+A GPT-family review is optional input. It is relentless and surfaces edge cases out of proportion to their importance, so an Opus or Fable triager under Claude Code, or the GLM reviewer under Codex, decides which findings become fixes; under Claude Code, the main conductor may perform this triage itself. The same conductor-may-decide allowance also covers an Opus or Fable review's findings under Claude Code. Give the triager the findings plus the diff and ask it to return `fix` or `skip` for each finding with a one-line reason. These decisions are the explicit follow-up step this reference requires. Include every finding and decision, including skips, in the human gate summary.
 
-For Phase 4, run any optional GPT-family review first, triage its findings, apply the accepted fixes, then run the Opus or Fable review once over the complete resulting diff. That final review is the one external review the workflow's "exactly once" refers to.
+For Phase 4, run any optional GPT-family review first, triage its findings, apply the accepted fixes, then run the harness's chosen reviewer once over the complete resulting diff: Opus or Fable under Claude Code, or pi with glm-5.3-flash under Codex. That final review is the one external review the workflow's "exactly once" refers to.
 
 ## Handling the result
 
