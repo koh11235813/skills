@@ -60,7 +60,7 @@ Inspect both the agent definition and the child runtime's effective tool reach. 
 
 In the observed local setup, `scout` and `reviewer` expose `bash`, and the inherited guard mode is `normal`, not `readonly`. The reviewer's instruction to use only read-only commands is not enforcement. `planner` lists only reader tools, but its frontmatter alone does not verify the loaded extension/MCP paths. None of these role names automatically passes the eligibility gate. These three local definitions drop the sample's `model` line and inherit the session model. The local `worker` keeps full tools and declares a different model, `deepseek/deepseek-v4-flash-0731`, which is listed in the local model store but was not dispatched in this check.
 
-Use an eligible fresh-context reviewer when one is confirmed, preferring a different provider as specified in [external-review.md](../external-review.md). Otherwise stop at the review gate for a human exception. Do not silently replace the external review with a write-capable `reviewer` or self-review, or weaken permissions to make a child run.
+Use an eligible fresh-context reviewer when one is confirmed, with reviewer choice specified in [external-review.md](../external-review.md). Otherwise stop at the review gate for a human exception. Do not silently replace the external review with a write-capable `reviewer` or self-review, or weaken permissions to make a child run.
 
 ### Local worktree extension
 
@@ -75,3 +75,5 @@ Inspect the actual worktree changes, not just the returned summary, and get the 
 The inspected `subagent` starts a new process with `--no-session` for every task and exposes no resume/thread identifier. Reusing an agent name, passing `{previous}`, or sharing a worktree does not confirm `delegate_persistent`. A local `/goal`, messaging extension, or `monitor`/`jobs` pair also needs its own verified same-context delivery/reply contract before it can support the manager loop.
 
 Shell permissions may prevent a nested Pi CLI from starting even when the parent session works. In this session, `pi --help` reported `EPERM` creating `~/.pi/agent/settings.json.lock`; a shell-launched CLI review was therefore not established as an alternative. Treat startup, authentication, sandbox, or artifact-access failures as unavailable capabilities. Report the blocker and follow the relevant fallback; changing the user's settings, credentials, extensions, or agent definitions is a separate task requiring authorization.
+
+From Claude Code on 2026-10-31, `pi -p --session-id <uuid>` preserved context across invocations; see [Implementer CLI](claude-code.md#implementer-cli) for the commands and evidence. This path was not checked from inside a Pi session, so confirm it locally before relying on it.

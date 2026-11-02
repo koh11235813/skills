@@ -20,6 +20,8 @@ npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 
 ### External dependencies
 
+`explore-grill-build` optionally uses [pi](https://github.com/earendil-works/pi) or [codex](https://github.com/openai/codex) for its implementer path, plus `tmux` when a run is driven in a pane. Its reviewer path uses `claude` with Opus or Fable under Claude Code, and `pi` with glm-5.3-flash through OpenRouter under Codex. The codex `--profile openrouter` path also needs `~/.codex/openrouter.config.toml`. Without the implementer dependencies, the workflow falls back to native delegates or inline implementation. When the required reviewer cannot run, it reports the review as not run and asks for an explicit human exception.
+
 Most skills here are markdown only. `jev-recommendation-rate` is the exception: it calls the [TypeSafe](https://typesafe.ai) API from a shell script, so it needs `curl`, `jq`, and a `TYPESAFE_API_KEY` in the environment.
 
 `jq` is not part of a base install on most Linux distributions (recent macOS ships it):

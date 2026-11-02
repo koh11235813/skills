@@ -34,6 +34,7 @@ Before Phase 0, inspect the current runtime's visible tools, permissions, and wo
 - `delegate_parallel` — concurrent delegate dispatch plus a reliable join/result.
 - `delegate_model_select` — a genuinely lower model tier for a delegate.
 - `delegate_write_isolated` — isolated worktrees, branches, or sandboxes with a parent-controlled integration path.
+- `implementer_cli` — an external coding CLI that can edit the workspace at a selected model and effort, confirmed by a live probe in the current session.
 - `delegate_persistent` — a delegate that can be re-messaged with its prior context intact, whose reply the orchestrator can wait for and inspect.
 - `skill_discovery` and `skill_invoke` — discover and invoke an installed skill.
 - `diff_access` and `test_runner` — inspect changes and run relevant checks.
@@ -128,6 +129,10 @@ Show the user the plan document plus a short summary of what both reviews found,
 
 Implement the reviewed plan test-first.
 
+### Who writes the code
+
+When `implementer_cli` is confirmed, it is the default writer: the orchestrator delegates each slice or phase to it and stays the manager and verifier rather than typing the implementation. Pick the command and model mapping from the runtime adapter. A CLI session whose probe demonstrated resumption with context intact also confirms `delegate_persistent` for the manager loop. Concurrent writers still require the isolation and parent-controlled integration gate below. When no CLI path is confirmed, fall back to a native write delegate, then inline implementation, recording the reason. Keep the implementer separate from its Phase 4 reviewer; the implementer never serves as its own external reviewer.
+
 ### Which loop
 
 If `skill_discovery` and `skill_invoke` are confirmed, look for a TDD skill — `tdd` from the companion set, or a harness-native equivalent under another name — and load it. If none is present, the one-time install suggestion from Phase 1 applies (once per session, not once per phase); either way, run the discipline below.
@@ -146,9 +151,9 @@ For a long plan with several ordered phases, use a manager loop when `delegate_p
 
 If the plan breaks into several largely independent tracer-bullet slices, parallelize writes only when `delegate_write_isolated` is confirmed for every slice and the parent has an explicit integration and verification step. Logical independence or disjoint filenames alone is not isolation. If any write-capable delegate shares a workspace, branch, generated output, or test fixtures with another, implement in dependency order instead.
 
-Use per-delegate model tiers only when `delegate_model_select` is confirmed; otherwise use the session default rather than claiming cost or quality tiering.
+With `implementer_cli`, the adapter's model mapping supplies the tiers. For native delegates, use per-delegate model tiers only when `delegate_model_select` is confirmed; otherwise use the session default rather than claiming cost or quality tiering.
 
-A starting point for the difficulty → model mapping — adjust this freely, it's a default suggestion, not a fixed rule:
+A starting point for native delegates' difficulty → model mapping — adjust this freely, it's a default suggestion, not a fixed rule:
 
 | Slice difficulty | Example | Suggested model |
 |---|---|---|
@@ -158,7 +163,7 @@ A starting point for the difficulty → model mapping — adjust this freely, it
 
 ### The one invariant
 
-Whichever path you used — isolated delegates or direct implementation — you, the orchestrating agent, re-check each slice's output yourself before moving on to the next one or calling the phase done. Delegating a slice delegates the typing, not the responsibility for whether it is right. Read the diff, run the tests, and confirm that it matches that slice of the plan.
+Whichever path you used — an implementer CLI, isolated delegates, or direct implementation — you, the orchestrating agent, re-check each slice's output yourself before moving on to the next one or calling the phase done. Delegating a slice delegates the typing, not the responsibility for whether it is right. Read the diff, run the tests, and confirm that it matches that slice of the plan.
 
 This per-slice check is the orchestrator's own same-model read of the diff and tests — never invoke the Phase 2 or Phase 4 external reviewer per slice on your own initiative. The strict external-model review happens exactly once, in Phase 4, over the complete diff, where it can also catch a defect that only shows up across slices — two slices that each look fine on their own but interact in a way neither slice's own check would surface. This cadence is the default, not a cage: an explicit user instruction to externally review a specific slice overrides it, and the Phase 1 interview may propose per-slice external review as an option when a slice is risky enough to justify the cost — but absent either, don't add mid-implementation external reviews yourself.
 
@@ -174,7 +179,7 @@ Read your own (or your delegates') diff directly. Run tests and typecheck. If a 
 
 Use the same eligibility gate as Phase 2 — see [references/external-review.md](references/external-review.md) — but hand the reviewer the actual diff and touched-files list instead of the plan document. Frame the ask as reviewing real code: correctness, edge cases the tests might have missed, and anywhere implementation drifted from the reviewed plan. Handing over the complete diff in one pass is deliberate — it lets the reviewer catch cross-slice interactions that no per-slice check could see.
 
-Per that reference's ground rule: never auto-apply anything this review suggests. Surface the findings; let the human or an explicit next step decide what happens to them. This rule is absolute here, unlike the self-review step above — this is an outside opinion, not the orchestrator's own already-checked work.
+Per that reference's ground rule: never auto-apply anything this review suggests. Surface the findings; let the human or the reference's triage step decide what happens to them. Apply findings only after an explicit decision by the human or by that triage step, never silently; include every finding and decision in the human gate summary.
 
 There's no weak-model legibility pass here — that technique specifically catches underspecified *plans*, where a cheap model's confusion is diagnostic of missing detail. A diff is either correct or it isn't; a cheap model's read on that isn't informative the same way.
 
@@ -188,7 +193,7 @@ Never commit without that explicit go-ahead. This isn't specific to this workflo
 
 A few things hold across every phase above, worth stating once instead of five times:
 
-- **External findings are never auto-applied** (except the explicit Phase 4.1 self-review carve-out). Whether it's the Phase 2 plan review or the Phase 4 external diff review, an outside agent's output is input to a decision someone makes explicitly — never a patch applied silently.
+- **External findings are never auto-applied** (except the explicit Phase 4.1 self-review carve-out). Whether it's the Phase 2 plan review or the Phase 4 external diff review, an outside agent's findings are applied only after an explicit decision by the human or by the triage step in [references/external-review.md](references/external-review.md) — never a patch applied silently. Every finding and decision still reaches the human gate.
 - **The plan document is the source of truth, not the conversation.** Every phase after Phase 1 reads the plan, not chat history. Keep it current.
 - **Delegation doesn't remove verification.** Whatever tier of subagent did the work, the orchestrator checks it before moving on.
 - **Capability gates outlive the phase that ran them.** A companion skill loaded mid-workflow inherits this session's confirmed/unavailable marks; its own instructions to delegate, spawn, or invoke don't re-open a gate that was closed in the runtime check.
