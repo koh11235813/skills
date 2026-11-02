@@ -22,7 +22,9 @@ npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 
 `explore-grill-build` optionally uses [pi](https://github.com/earendil-works/pi) or [codex](https://github.com/openai/codex) for its implementer path, plus `tmux` when a run is driven in a pane. Its reviewer path uses `claude` with Opus or Fable under Claude Code, and `pi` with glm-5.3-flash through OpenRouter under Codex. The codex `--profile openrouter` path also needs `~/.codex/openrouter.config.toml`. Without the implementer dependencies, the workflow falls back to native delegates or inline implementation. When the required reviewer cannot run, it reports the review as not run and asks for an explicit human exception.
 
-Most skills here are markdown only. `jev-recommendation-rate` is the exception: it calls the [TypeSafe](https://typesafe.ai) API from a shell script, so it needs `curl`, `jq`, and a `TYPESAFE_API_KEY` in the environment.
+Most skills here are markdown only. The exceptions are `jev-recommendation-rate` and `rustxng`.
+
+`jev-recommendation-rate` calls the [TypeSafe](https://typesafe.ai) API from a shell script, so it needs `curl`, `jq`, and a `TYPESAFE_API_KEY` in the environment.
 
 `jq` is not part of a base install on most Linux distributions (recent macOS ships it):
 
@@ -35,6 +37,12 @@ export TYPESAFE_API_KEY=... # key from https://typesafe.ai
 
 When any of them is missing, `jev-recommendation-rate` says so and the question goes out without recommendation rates. Every other skill in this repository is unaffected.
 
+`rustxng` drives a local [RustXNG](https://github.com/sahenjp/RustXNG) server, so it needs the `rustxng` binary on `PATH` plus `curl` and `jq`. The prebuilt binaries on the [releases page](https://github.com/sahenjp/RustXNG/releases/latest) contain only the server. Installing with cargo also gives you `rustxng-index`, which the skill's local index section uses:
+
+```bash
+cargo install --git https://github.com/sahenjp/RustXNG.git --tag v0.26.0
+```
+
 ## Available skills
 
 - **explore-grill-build** — End-to-end workflow for implementing a nontrivial feature or fix, from first look to committed code. Explores the codebase, interviews to turn vague requirements into a written plan, gets that plan reviewed, implements it test-first, and gates on review before anything is committed.
@@ -42,6 +50,8 @@ When any of them is missing, `jev-recommendation-rate` says so and the question 
 - **jev-recommendation-rate** — Attaches a recommendation rate to every option of a multiple-choice question, computed by TypeSafe's Jev model, so a question shows how the probability mass splits across its options rather than only which one was picked. Applies to `AskUserQuestion` calls and to grill rounds from `grilling`/`explore-grill-build`. Ships `score-options.sh`, which scores a whole round in one request against a cached context brief and reports its token cost. Requires `curl`, `jq` and `TYPESAFE_API_KEY`.
 
 - **codex-harness-behavior** - Operational model of how the codex (codex-rs) agent harness constrains, gates, and corrects agent behavior
+
+- **rustxng** — Web search and page-text grounding through a local RustXNG server with `curl` and `jq`: starting a server that exits on its own when idle, keeping responses small, fetching page text, and the behaviours measured against the real binary (latency, domain filters, single-engine blocking, the settings file trap). Also covers crawling a local index with `rustxng-index`. Requires `rustxng`, `curl` and `jq`.
 
 - **tmux-control** — Driving interactive terminal sessions with tmux: spawning another agent's CLI in a pane and waiting for its prompt before sending anything, sending keys and reading output safely, and sharing a live session over ssh with a human or a peer agent. Ships `wait-for-text.sh` and `find-sessions.sh`, plus a record of per-CLI quirks observed when driving codex, hermes and opencode through tmux.
 

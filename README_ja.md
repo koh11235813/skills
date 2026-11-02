@@ -22,7 +22,9 @@ npx skills add mattpocock/skills --skill grilling domain-modeling tdd
 
 `explore-grill-build` は、実装担当として任意で [pi](https://github.com/earendil-works/pi) か [codex](https://github.com/openai/codex) を使う。ペインで実行を動かすなら `tmux` も要る。レビューには、Claude Code では `claude` で Opus か Fable を、Codex では `pi` で OpenRouter 経由の glm-5.3-flash を使うよ。codex の `--profile openrouter` を使う場合は `~/.codex/openrouter.config.toml` も必要。実装に必要なものが揃わなければ、実行環境のネイティブな委任機能か、その場での実装にフォールバックするよ。必要なレビューツールが使えなければ、レビューは未実施だと伝えて、レビューなしで先へ進む例外の許可を人に求めるよ。
 
-ここのスキルはほとんどが markdown だけで完結する。例外は `jev-recommendation-rate` で、シェルスクリプトから [TypeSafe](https://typesafe.ai) の API を叩くので、`curl` と `jq`、それに環境変数 `TYPESAFE_API_KEY` が要る。
+ここのスキルはほとんどが markdown だけで完結する。例外は `jev-recommendation-rate` と `rustxng`。
+
+`jev-recommendation-rate` はシェルスクリプトから [TypeSafe](https://typesafe.ai) の API を叩くので、`curl` と `jq`、それに環境変数 `TYPESAFE_API_KEY` が要る。
 
 `jq` は多くの Linux ディストリの標準構成には入っていない（最近の macOS には同梱されている）:
 
@@ -35,6 +37,12 @@ export TYPESAFE_API_KEY=... # キーは https://typesafe.ai で取得
 
 どれかが欠けている場合、`jev-recommendation-rate` はその旨を伝えて、推奨率なしのまま質問を出す。このリポジトリの他のスキルには影響しない。
 
+`rustxng` はローカルの [RustXNG](https://github.com/sahenjp/RustXNG) サーバーを操作するので、`PATH` の通った `rustxng` バイナリと `curl`、`jq` が要る。[リリースページ](https://github.com/sahenjp/RustXNG/releases/latest)のビルド済みバイナリに入っているのはサーバーだけ。cargo で入れると、スキルのローカルインデックスの節で使う `rustxng-index` も一緒に入る:
+
+```bash
+cargo install --git https://github.com/sahenjp/RustXNG.git --tag v0.26.0
+```
+
 ## 収録されているスキル
 
 - **explore-grill-build**: 些細ではない機能追加・修正を、最初の調査からコミットまで一気通貫でやり切るワークフロー。コードベースを探索し、曖昧な要件をインタビュー形式で具体的なプランに落とし込み、そのプランをレビューし、テストファーストで実装し、コミット前に必ずレビューゲートを通す。
@@ -42,6 +50,8 @@ export TYPESAFE_API_KEY=... # キーは https://typesafe.ai で取得
 - **jev-recommendation-rate**: 選択式の質問の各選択肢に、TypeSafe の Jev モデルが算出した推奨率を付ける。どれを選んだかだけでなく、確率がどう割れているかが読み手に見えるようになる。対象は `AskUserQuestion` の呼び出しと、`grilling` / `explore-grill-build` の grill ラウンド。同梱の `score-options.sh` は、キャッシュした前提要約に対して1ラウンド分を1リクエストで採点し、消費トークンも報告する。`curl`、`jq`、`TYPESAFE_API_KEY` が必要。
 
 - **codex-harness-behavior**: codex (codex-rs) エージェントハーネスがエージェントの行動を制約、制御、修正する方法の運用モデル。
+
+- **rustxng**: ローカルの RustXNG サーバーを `curl` と `jq` で使い、Web 検索とページ本文の取得を行う。アイドル時に自分で終了するサーバーの起動、応答を小さく保つ方法、本文の取り方に加えて、実バイナリで測った挙動（レイテンシ、ドメイン絞り込み、単一エンジンのブロック、設定ファイルの落とし穴）を記録してある。`rustxng-index` によるローカルインデックスのクロールも扱う。`rustxng`、`curl`、`jq` が必要。
 
 - **tmux-control**: tmux で対話的なターミナルセッションを扱うためのスキル。他のエージェントの CLI をペインで起動してプロンプトが出るまで待つ手順、キー送出と出力読み取りの安全なやり方、そして ssh 越しに人間や他エージェントとセッションを共有する方法を扱う。`wait-for-text.sh` と `find-sessions.sh` を同梱し、codex・hermes・opencode を tmux 経由で操作したときに実際に観測された CLI ごとの落とし穴も記録してある。
 
